@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffd23f" />
+  <meta name="description" content="Quack Pack — a free, fun, offline classroom toolkit for K-12 teachers. Random student picker, team maker, timer, dice roller and noise meter." />
+  <title>Quack Pack 🦆 — Classroom Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%86%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="app-header">
+    <button class="brand" id="homeBtn" aria-label="Go to Quack Pack home">
+      <span class="brand-duck" aria-hidden="true">🦆</span>
+      <span class="brand-text">Quack&nbsp;Pack</span>
+    </button>
+    <div class="header-actions">
+      <button class="icon-btn" id="rosterBtn" aria-label="Edit class roster" title="Class roster">
+        <span aria-hidden="true">👥</span>
+      </button>
+      <button class="icon-btn" id="soundBtn" aria-label="Toggle sound" title="Toggle sound" aria-pressed="true">
+        <span aria-hidden="true" id="soundIcon">🔊</span>
+      </button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <span aria-hidden="true" id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="app-main">
+
+    <!-- ===================== HOME / TOOL GRID ===================== -->
+    <section id="view-home" class="view is-active" aria-label="Choose a tool">
+      <div class="hero">
+        <h1 class="hero-title">Your classroom, <span class="wobble">un‑ruffled.</span></h1>
+        <p class="hero-sub">Five ducktastic tools that just work. No logins, no ads, works offline.</p>
+      </div>
+
+      <nav class="tool-grid" aria-label="Tools">
+        <button class="tool-card" data-tool="picker" style="--c:#ff9f1c;--c2:#ffbf69">
+          <span class="tool-emoji" aria-hidden="true">🎯</span>
+          <span class="tool-name">Duck Picker</span>
+          <span class="tool-desc">Pick a random student — fairly.</span>
+        </button>
+        <button class="tool-card" data-tool="teams" style="--c:#2ec4b6;--c2:#8ae6dd">
+          <span class="tool-emoji" aria-hidden="true">🪺</span>
+          <span class="tool-name">Team Maker</span>
+          <span class="tool-desc">Split the flock into groups.</span>
+        </button>
+        <button class="tool-card" data-tool="timer" style="--c:#e71d36;--c2:#ff7b8c">
+          <span class="tool-emoji" aria-hidden="true">⏱️</span>
+          <span class="tool-name">Timer</span>
+          <span class="tool-desc">Countdown with a quacky finish.</span>
+        </button>
+        <button class="tool-card" data-tool="dice" style="--c:#8367c7;--c2:#b8a6e6">
+          <span class="tool-emoji" aria-hidden="true">🎲</span>
+          <span class="tool-name">Dice &amp; Numbers</span>
+          <span class="tool-desc">Roll dice or a random number.</span>
+        </button>
+        <button class="tool-card" data-tool="noise" style="--c:#3a86ff;--c2:#8ab6ff">
+          <span class="tool-emoji" aria-hidden="true">📢</span>
+          <span class="tool-name">Noise Meter</span>
+          <span class="tool-desc">Keep the volume in check.</span>
+        </button>
+        <button class="tool-card ghost" id="rosterCard" style="--c:#6c757d;--c2:#adb5bd">
+          <span class="tool-emoji" aria-hidden="true">👥</span>
+          <span class="tool-name">Class Roster</span>
+          <span class="tool-desc" id="rosterCount">Add your students →</span>
+        </button>
+      </nav>
+    </section>
+
+    <!-- ===================== DUCK PICKER ===================== -->
+    <section id="view-picker" class="view" aria-label="Duck Picker" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>🎯 Duck Picker</h2>
+      </div>
+      <div class="stage picker-stage">
+        <div class="pond" id="pond" aria-hidden="true"></div>
+        <div class="picked-name" id="pickedName" role="status" aria-live="polite">Tap “Pick” to choose</div>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary big" id="pickBtn">🎯 Pick a duck</button>
+        <label class="switch">
+          <input type="checkbox" id="noRepeat" checked />
+          <span>No repeats until everyone’s picked</span>
+        </label>
+        <button class="btn btn-ghost" id="resetPicker">Reset picks</button>
+        <p class="hint" id="pickerHint"></p>
+      </div>
+    </section>
+
+    <!-- ===================== TEAM MAKER ===================== -->
+    <section id="view-teams" class="view" aria-label="Team Maker" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>🪺 Team Maker</h2>
+      </div>
+      <div class="controls team-controls">
+        <div class="seg" role="group" aria-label="Split method">
+          <button class="seg-btn is-on" id="byTeams" data-mode="teams">By # of teams</button>
+          <button class="seg-btn" id="bySize" data-mode="size">By team size</button>
+        </div>
+        <div class="stepper">
+          <button class="btn btn-ghost step" id="teamMinus" aria-label="Decrease">−</button>
+          <div class="stepper-val"><span id="teamNum">4</span><small id="teamLabel">teams</small></div>
+          <button class="btn btn-ghost step" id="teamPlus" aria-label="Increase">+</button>
+        </div>
+        <button class="btn btn-primary big" id="makeTeams">🪺 Make teams</button>
+      </div>
+      <div class="teams-out" id="teamsOut" aria-live="polite"></div>
+    </section>
+
+    <!-- ===================== TIMER ===================== -->
+    <section id="view-timer" class="view" aria-label="Timer" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>⏱️ Timer</h2>
+      </div>
+      <div class="stage timer-stage">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="54" />
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="54" />
+        </svg>
+        <div class="timer-face">
+          <div class="timer-display" id="timerDisplay" role="timer" aria-live="off">05:00</div>
+          <div class="timer-sub" id="timerSub">Ready</div>
+        </div>
+      </div>
+      <div class="presets">
+        <button class="chip" data-sec="30">30s</button>
+        <button class="chip" data-sec="60">1m</button>
+        <button class="chip" data-sec="120">2m</button>
+        <button class="chip" data-sec="300">5m</button>
+        <button class="chip" data-sec="600">10m</button>
+        <button class="chip" data-sec="900">15m</button>
+      </div>
+      <div class="controls timer-controls">
+        <button class="btn btn-ghost step" id="tMinus" aria-label="Subtract a minute">−1m</button>
+        <button class="btn btn-primary big" id="timerToggle">▶ Start</button>
+        <button class="btn btn-ghost step" id="tPlus" aria-label="Add a minute">+1m</button>
+        <button class="btn btn-ghost" id="timerReset">Reset</button>
+      </div>
+    </section>
+
+    <!-- ===================== DICE & NUMBERS ===================== -->
+    <section id="view-dice" class="view" aria-label="Dice and Numbers" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>🎲 Dice &amp; Numbers</h2>
+      </div>
+      <div class="seg" role="group" aria-label="Mode">
+        <button class="seg-btn is-on" data-dmode="dice">Dice</button>
+        <button class="seg-btn" data-dmode="number">Random number</button>
+      </div>
+
+      <div id="diceMode">
+        <div class="stage dice-stage" id="diceStage"></div>
+        <div class="presets">
+          <button class="chip dice-count is-on" data-n="1">1 die</button>
+          <button class="chip dice-count" data-n="2">2 dice</button>
+          <button class="chip dice-count" data-n="3">3 dice</button>
+          <button class="chip dice-count" data-n="4">4 dice</button>
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary big" id="rollBtn">🎲 Roll</button>
+          <p class="hint" id="diceTotal"></p>
+        </div>
+      </div>
+
+      <div id="numberMode" hidden>
+        <div class="stage number-stage"><span id="numberOut">?</span></div>
+        <div class="range-row">
+          <label>Min <input type="number" id="numMin" value="1" inputmode="numeric" /></label>
+          <label>Max <input type="number" id="numMax" value="100" inputmode="numeric" /></label>
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary big" id="genNumber">🔢 Generate</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== NOISE METER ===================== -->
+    <section id="view-noise" class="view" aria-label="Noise Meter" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>📢 Noise Meter</h2>
+      </div>
+      <div class="stage noise-stage">
+        <div class="noise-duck" id="noiseDuck" aria-hidden="true">😌</div>
+        <div class="noise-bar-wrap" aria-hidden="true">
+          <div class="noise-bar" id="noiseBar"></div>
+        </div>
+        <div class="noise-label" id="noiseLabel" role="status" aria-live="polite">Tap start to listen</div>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary big" id="noiseToggle">🎙️ Start listening</button>
+        <label class="range-slider">
+          Alarm threshold
+          <input type="range" id="noiseThresh" min="20" max="95" value="65" />
+        </label>
+        <p class="hint">Audio stays on this device — nothing is recorded or sent anywhere.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== ROSTER MODAL ===================== -->
+  <div class="modal-backdrop" id="rosterModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rosterTitle">
+      <div class="modal-head">
+        <h2 id="rosterTitle">👥 Class Roster</h2>
+        <button class="icon-btn" id="closeRoster" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-hint">One name per line. Saved on this device automatically.</p>
+      <textarea id="rosterText" spellcheck="false" placeholder="Ada&#10;Grace&#10;Alan&#10;Katherine&#10;…"></textarea>
+      <div class="modal-foot">
+        <span class="roster-badge"><span id="rosterModalCount">0</span> students</span>
+        <div class="modal-foot-actions">
+          <button class="btn btn-ghost" id="sampleRoster">Load sample</button>
+          <button class="btn btn-primary" id="saveRoster">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <footer class="app-footer">
+    Made with 🦆 for teachers · Works offline · No tracking, ever.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
