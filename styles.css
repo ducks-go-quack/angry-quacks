@@ -369,6 +369,58 @@ body {
   100% { transform: rotateY(1980deg) scale(1); }
 }
 
+/* Stopwatch laps */
+.timer-display small { font-size: .45em; font-weight: 700; color: var(--ink-soft); }
+.laps {
+  list-style: none; margin: 20px auto 0; padding: 0;
+  max-width: 420px; display: grid; gap: 6px;
+}
+.laps li {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 10px 16px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  animation: pop .3s cubic-bezier(.2,1.2,.4,1) both;
+}
+.laps li .lap-n { color: var(--ink-soft); }
+.laps li .lap-split { color: var(--ink-soft); font-weight: 600; font-size: .9em; }
+
+/* Traffic light */
+.traffic-stage { flex-direction: column; gap: 22px; min-height: 360px; }
+.light-housing {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 20px; border-radius: 28px;
+  background: linear-gradient(180deg, #2b2b30, #17171a);
+  box-shadow: var(--shadow), inset 0 2px 4px rgba(255,255,255,.06);
+}
+.lamp {
+  width: min(24vw, 96px); aspect-ratio: 1; border-radius: 50%;
+  border: 3px solid rgba(0,0,0,.4); cursor: pointer;
+  background: #3a3a40; transition: transform .12s, box-shadow .25s, background .25s, filter .25s;
+  filter: saturate(.5) brightness(.5);
+}
+.lamp:active { transform: scale(.94); }
+.lamp-red    { background: radial-gradient(circle at 35% 30%, #ff8a8a, #e71d36 60%, #a10f22); }
+.lamp-amber  { background: radial-gradient(circle at 35% 30%, #ffe08a, #ffbf1c 60%, #c98a00); }
+.lamp-green  { background: radial-gradient(circle at 35% 30%, #b6f5b6, #38b000 60%, #1f6b00); }
+.lamp.on { filter: none; box-shadow: 0 0 30px 4px currentColor; }
+.lamp-red.on   { color: #ff5a6e; }
+.lamp-amber.on { color: #ffcf4d; }
+.lamp-green.on { color: #57d945; }
+.traffic-label {
+  font-weight: 800; font-size: clamp(1.4rem, 6vw, 2rem); text-align: center;
+  min-height: 1.3em; transition: color .25s;
+}
+
+/* Roster share */
+.share-row {
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.share-title { font-weight: 700; color: var(--ink-soft); font-size: .9rem; }
+.share-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.share-actions .btn { padding: 12px 14px; font-size: .95rem; flex: 1; min-width: 120px; }
+
 /* Noise */
 .noise-stage { flex-direction: column; gap: 20px; min-height: 320px; }
 .noise-duck { font-size: clamp(4rem, 22vw, 7rem); transition: transform .1s; }

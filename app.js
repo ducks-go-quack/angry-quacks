@@ -110,7 +110,7 @@
   }
 
   /* -------------------- routing -------------------- */
-  const views = { home: "#view-home", picker: "#view-picker", wheel: "#view-wheel", teams: "#view-teams", timer: "#view-timer", dice: "#view-dice", noise: "#view-noise" };
+  const views = { home: "#view-home", picker: "#view-picker", wheel: "#view-wheel", teams: "#view-teams", timer: "#view-timer", stopwatch: "#view-stopwatch", traffic: "#view-traffic", dice: "#view-dice", noise: "#view-noise" };
   let current = "home";
   function go(tool) {
     if (!views[tool]) tool = "home";
@@ -516,6 +516,117 @@
   })();
 
   /* ============================================================
+     TOOL 3b — STOPWATCH
+     ============================================================ */
+  const Stopwatch = (() => {
+    const CIRC = 2 * Math.PI * 54;
+    let running = false, startAt = 0, elapsed = 0, raf = 0;
+    let laps = [], lapCount = 0;
+
+    function fmt(ms) {
+      const total = Math.floor(ms / 100); // tenths
+      const tenths = total % 10;
+      const s = Math.floor(total / 10);
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return { main: `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`, t: tenths };
+    }
+
+    function draw() {
+      const ms = running ? elapsed + (performance.now() - startAt) : elapsed;
+      const f = fmt(ms);
+      $("#swDisplay").innerHTML = `${f.main}<small>.${f.t}</small>`;
+      const frac = (ms % 60000) / 60000; // fills once per minute
+      $("#swRing").style.strokeDashoffset = String(CIRC * (1 - frac));
+      if (running) raf = requestAnimationFrame(draw);
+    }
+
+    function start() {
+      running = true;
+      startAt = performance.now();
+      $("#swToggle").textContent = "⏸ Stop";
+      $("#swSub").textContent = "Running…";
+      ensureAudio();
+      raf = requestAnimationFrame(draw);
+    }
+    function stop() {
+      running = false;
+      elapsed += performance.now() - startAt;
+      cancelAnimationFrame(raf);
+      $("#swToggle").textContent = "▶ Resume";
+      $("#swSub").textContent = "Stopped";
+      draw();
+    }
+    function toggle() { running ? stop() : start(); }
+
+    function reset() {
+      running = false; cancelAnimationFrame(raf);
+      elapsed = 0; laps = []; lapCount = 0;
+      $("#swLaps").innerHTML = "";
+      $("#swToggle").textContent = "▶ Start";
+      $("#swSub").textContent = "Ready";
+      draw();
+    }
+
+    function lap() {
+      if (!running && elapsed === 0) return;
+      const ms = running ? elapsed + (performance.now() - startAt) : elapsed;
+      const prev = laps.length ? laps[laps.length - 1] : 0;
+      laps.push(ms);
+      lapCount++;
+      const split = fmt(ms - prev), total = fmt(ms);
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="lap-n">Lap ${lapCount}</span>` +
+        `<span class="lap-split">+${split.main}.${split.t}</span>` +
+        `<span>${total.main}.${total.t}</span>`;
+      const list = $("#swLaps");
+      list.insertBefore(li, list.firstChild);
+      tick();
+    }
+
+    function init() {
+      $("#swToggle").addEventListener("click", toggle);
+      $("#swReset").addEventListener("click", reset);
+      $("#swLap").addEventListener("click", lap);
+      draw();
+    }
+    LEAVE.stopwatch = () => { if (running) stop(); };
+    return { init };
+  })();
+
+  /* ============================================================
+     TOOL 3c — TRAFFIC LIGHT
+     ============================================================ */
+  const Traffic = (() => {
+    const LABELS = {
+      red: "🔴 Silent, please",
+      amber: "🟡 Whisper voices",
+      green: "🟢 Talk &amp; work",
+    };
+    const COLORS = { red: "#e71d36", amber: "#f4a900", green: "#38b000" };
+
+    function set(state, opts) {
+      $$(".lamp").forEach((l) => l.classList.toggle("on", l.dataset.state === state));
+      const label = $("#trafficLabel");
+      if (state && LABELS[state]) {
+        label.innerHTML = LABELS[state];
+        label.style.color = COLORS[state];
+      } else {
+        label.textContent = "Tap a light";
+        label.style.color = "";
+      }
+      store.set("traffic", state || "");
+      if (state && !(opts && opts.silent)) quack(state === "green" ? 1.4 : state === "amber" ? 1 : 0.7);
+    }
+
+    function init() {
+      $$(".lamp").forEach((l) => l.addEventListener("click", () => set(l.dataset.state)));
+    }
+    ENTER.traffic = () => set(store.get("traffic", "") || null, { silent: true });
+    return { init };
+  })();
+
+  /* ============================================================
      TOOL 4 — DICE & NUMBERS
      ============================================================ */
   const Dice = (() => {
@@ -720,6 +831,71 @@
     toast(roster.length ? `Saved ${roster.length} students ✅` : "Roster cleared");
   }
 
+  /* ---- roster: share / backup / restore ---- */
+  // Unicode-safe base64 so names with accents survive the round trip.
+  function encodeRoster(names) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(names))));
+  }
+  function decodeRoster(str) {
+    try {
+      const arr = JSON.parse(decodeURIComponent(escape(atob(str))));
+      return Array.isArray(arr) ? arr.map(String) : null;
+    } catch (e) { return null; }
+  }
+  function shareLink() {
+    const base = location.origin === "null" || !location.origin
+      ? location.href.split("#")[0]
+      : location.origin + location.pathname;
+    return base + "#roster=" + encodeRoster(parseRoster($("#rosterText").value));
+  }
+  async function copyShareLink() {
+    const link = shareLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      toast("Share link copied 🔗");
+    } catch (e) {
+      // fallback: drop it into the textarea selection for manual copy
+      const ta = $("#rosterText");
+      ta.value += (ta.value ? "\n" : "") + link;
+      toast("Copy the link at the bottom of the list");
+    }
+  }
+  function downloadRoster() {
+    const names = parseRoster($("#rosterText").value);
+    if (!names.length) { toast("Nothing to back up yet"); return; }
+    const blob = new Blob([names.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "class-roster.txt";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Roster saved as a file ⬇️");
+  }
+  function importFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const names = parseRoster(String(reader.result));
+      if (!names.length) { toast("That file had no names"); return; }
+      $("#rosterText").value = names.join("\n");
+      $("#rosterModalCount").textContent = names.length;
+      toast(`Loaded ${names.length} names — tap Save to keep`);
+    };
+    reader.readAsText(file);
+  }
+  // If the app was opened from a share link, load those names into the editor.
+  function maybeImportFromHash() {
+    const m = /^#roster=(.+)$/.exec(location.hash);
+    if (!m) return false;
+    const names = decodeRoster(m[1]);
+    history.replaceState(null, "", location.pathname); // clean the URL
+    if (!names || !names.length) return false;
+    openRoster();
+    $("#rosterText").value = names.join("\n");
+    $("#rosterModalCount").textContent = names.length;
+    toast(`Shared roster loaded — tap Save to keep`);
+    return true;
+  }
+
   /* ============================================================
      GLOBAL CHROME — theme, sound, nav
      ============================================================ */
@@ -741,7 +917,7 @@
     applySound();
 
     // wire up tools
-    Picker.init(); Wheel.init(); Teams.init(); Timer.init(); Dice.init(); Noise.init();
+    Picker.init(); Wheel.init(); Teams.init(); Timer.init(); Stopwatch.init(); Traffic.init(); Dice.init(); Noise.init();
 
     // navigation
     $$(".tool-card[data-tool]").forEach((c) => c.addEventListener("click", () => go(c.dataset.tool)));
@@ -756,6 +932,12 @@
     $("#sampleRoster").addEventListener("click", () => { $("#rosterText").value = DEFAULT_NAMES.join("\n"); $("#rosterModalCount").textContent = DEFAULT_NAMES.length; });
     $("#rosterModal").addEventListener("click", (e) => { if (e.target === $("#rosterModal")) closeRoster(); });
     $("#rosterText").addEventListener("input", () => { $("#rosterModalCount").textContent = parseRoster($("#rosterText").value).length; });
+
+    // roster share / backup / restore
+    $("#copyLink").addEventListener("click", copyShareLink);
+    $("#downloadRoster").addEventListener("click", downloadRoster);
+    $("#importRoster").addEventListener("click", () => $("#importFile").click());
+    $("#importFile").addEventListener("change", (e) => { if (e.target.files[0]) importFromFile(e.target.files[0]); e.target.value = ""; });
 
     // theme + sound
     $("#themeBtn").addEventListener("click", () =>
@@ -778,8 +960,13 @@
     }
     updateRosterCounts();
 
-    // open the view named in the URL (deep links / refresh)
-    go((location.hash || "#home").slice(1) || "home");
+    // If launched from a share link, load those names first, then land on home.
+    if (maybeImportFromHash()) {
+      go("home");
+    } else {
+      // open the view named in the URL (deep links / refresh)
+      go((location.hash || "#home").slice(1) || "home");
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

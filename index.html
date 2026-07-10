@@ -60,6 +60,16 @@
           <span class="tool-name">Timer</span>
           <span class="tool-desc">Countdown with a quacky finish.</span>
         </button>
+        <button class="tool-card" data-tool="stopwatch" style="--c:#ef476f;--c2:#ff9db3">
+          <span class="tool-emoji" aria-hidden="true">⏲️</span>
+          <span class="tool-name">Stopwatch</span>
+          <span class="tool-desc">Count up, with laps.</span>
+        </button>
+        <button class="tool-card" data-tool="traffic" style="--c:#38b000;--c2:#8fd694">
+          <span class="tool-emoji" aria-hidden="true">🚦</span>
+          <span class="tool-name">Traffic Light</span>
+          <span class="tool-desc">Signal the room's noise level.</span>
+        </button>
         <button class="tool-card" data-tool="dice" style="--c:#8367c7;--c2:#b8a6e6">
           <span class="tool-emoji" aria-hidden="true">🎲</span>
           <span class="tool-name">Dice &amp; Numbers</span>
@@ -175,6 +185,49 @@
       </div>
     </section>
 
+    <!-- ===================== STOPWATCH ===================== -->
+    <section id="view-stopwatch" class="view" aria-label="Stopwatch" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>⏲️ Stopwatch</h2>
+      </div>
+      <div class="stage timer-stage">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="54" />
+          <circle class="ring-fg" id="swRing" cx="60" cy="60" r="54" />
+        </svg>
+        <div class="timer-face">
+          <div class="timer-display" id="swDisplay">00:00<small>.0</small></div>
+          <div class="timer-sub" id="swSub">Ready</div>
+        </div>
+      </div>
+      <div class="controls timer-controls">
+        <button class="btn btn-ghost step" id="swLap">Lap</button>
+        <button class="btn btn-primary big" id="swToggle">▶ Start</button>
+        <button class="btn btn-ghost step" id="swReset">Reset</button>
+      </div>
+      <ol class="laps" id="swLaps" aria-live="polite"></ol>
+    </section>
+
+    <!-- ===================== TRAFFIC LIGHT ===================== -->
+    <section id="view-traffic" class="view" aria-label="Traffic Light" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>🚦 Traffic Light</h2>
+      </div>
+      <div class="stage traffic-stage">
+        <div class="light-housing" role="group" aria-label="Room signal">
+          <button class="lamp lamp-red" data-state="red" aria-label="Red — silent"></button>
+          <button class="lamp lamp-amber" data-state="amber" aria-label="Amber — whisper"></button>
+          <button class="lamp lamp-green" data-state="green" aria-label="Green — talk and work"></button>
+        </div>
+        <div class="traffic-label" id="trafficLabel" role="status" aria-live="polite">Tap a light</div>
+      </div>
+      <div class="controls">
+        <p class="hint">Tap a light to set the room signal — it stays put until you change it.</p>
+      </div>
+    </section>
+
     <!-- ===================== DICE & NUMBERS ===================== -->
     <section id="view-dice" class="view" aria-label="Dice and Numbers" hidden>
       <div class="tool-head">
@@ -262,6 +315,15 @@
         <div class="modal-foot-actions">
           <button class="btn btn-ghost" id="sampleRoster">Load sample</button>
           <button class="btn btn-primary" id="saveRoster">Save</button>
+        </div>
+      </div>
+      <div class="share-row">
+        <span class="share-title">Move this roster to another device</span>
+        <div class="share-actions">
+          <button class="btn btn-ghost" id="copyLink">🔗 Copy link</button>
+          <button class="btn btn-ghost" id="downloadRoster">⬇️ Backup</button>
+          <button class="btn btn-ghost" id="importRoster">📂 Restore</button>
+          <input type="file" id="importFile" accept=".txt,text/plain" hidden />
         </div>
       </div>
     </div>
