@@ -4,7 +4,8 @@ A free, fun, **offline-first** toolkit for K‑12 teachers. Five of the tools yo
 reach for every day, wrapped in a friendly duck theme. No logins, no ads, no
 tracking — and it works with no internet connection.
 
-**Just three files. Open `index.html` and you're teaching.**
+**Open `index.html` and you're teaching** — or use the hosted version:
+👉 **https://ducks-go-quack.github.io/angry-quacks/**
 
 ## The tools
 
