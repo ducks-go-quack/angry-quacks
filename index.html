@@ -45,6 +45,11 @@
           <span class="tool-name">Duck Picker</span>
           <span class="tool-desc">Pick a random student — fairly.</span>
         </button>
+        <button class="tool-card" data-tool="wheel" style="--c:#06d6a0;--c2:#8ae6b0">
+          <span class="tool-emoji" aria-hidden="true">🎡</span>
+          <span class="tool-name">Spinner Wheel</span>
+          <span class="tool-desc">Give the wheel a big spin.</span>
+        </button>
         <button class="tool-card" data-tool="teams" style="--c:#2ec4b6;--c2:#8ae6dd">
           <span class="tool-emoji" aria-hidden="true">🪺</span>
           <span class="tool-name">Team Maker</span>
@@ -91,6 +96,29 @@
         </label>
         <button class="btn btn-ghost" id="resetPicker">Reset picks</button>
         <p class="hint" id="pickerHint"></p>
+      </div>
+    </section>
+
+    <!-- ===================== SPINNER WHEEL ===================== -->
+    <section id="view-wheel" class="view" aria-label="Spinner Wheel" hidden>
+      <div class="tool-head">
+        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
+        <h2>🎡 Spinner Wheel</h2>
+      </div>
+      <div class="stage wheel-stage">
+        <div class="wheel-wrap">
+          <div class="wheel-pointer" aria-hidden="true"></div>
+          <canvas id="wheelCanvas" width="620" height="620" role="img" aria-label="Spinner wheel of student names"></canvas>
+          <button class="wheel-hub" id="wheelSpin" aria-label="Spin the wheel">SPIN</button>
+        </div>
+        <div class="picked-name wheel-result" id="wheelResult" role="status" aria-live="polite">Give it a spin!</div>
+      </div>
+      <div class="controls">
+        <label class="switch">
+          <input type="checkbox" id="wheelRemove" />
+          <span>Remove each name after it’s picked</span>
+        </label>
+        <button class="btn btn-ghost" id="wheelReset">Reset wheel</button>
       </div>
     </section>
 
@@ -155,7 +183,8 @@
       </div>
       <div class="seg" role="group" aria-label="Mode">
         <button class="seg-btn is-on" data-dmode="dice">Dice</button>
-        <button class="seg-btn" data-dmode="number">Random number</button>
+        <button class="seg-btn" data-dmode="number">Number</button>
+        <button class="seg-btn" data-dmode="coin">Coin</button>
       </div>
 
       <div id="diceMode">
@@ -180,6 +209,16 @@
         </div>
         <div class="controls">
           <button class="btn btn-primary big" id="genNumber">🔢 Generate</button>
+        </div>
+      </div>
+
+      <div id="coinMode" hidden>
+        <div class="stage coin-stage">
+          <div class="coin" id="coin"><span id="coinFace">🦆</span></div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary big" id="flipCoin">🪙 Flip</button>
+          <p class="hint" id="coinOut">Heads = 🦆 &nbsp;·&nbsp; Tails = ⭐</p>
         </div>
       </div>
     </section>

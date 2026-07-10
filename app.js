@@ -93,8 +93,24 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
   }
 
+  // Celebratory falling emoji — shared by the picker and the wheel.
+  function rainDucks() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const emojis = ["🦆", "⭐", "🎉", "💛"];
+    for (let i = 0; i < 14; i++) {
+      const d = document.createElement("div");
+      d.className = "confetti-duck";
+      d.textContent = emojis[rand(emojis.length)];
+      d.style.left = rand(100) + "vw";
+      d.style.animationDuration = 1.6 + Math.random() * 1.4 + "s";
+      d.style.animationDelay = Math.random() * 0.3 + "s";
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 3200);
+    }
+  }
+
   /* -------------------- routing -------------------- */
-  const views = { home: "#view-home", picker: "#view-picker", teams: "#view-teams", timer: "#view-timer", dice: "#view-dice", noise: "#view-noise" };
+  const views = { home: "#view-home", picker: "#view-picker", wheel: "#view-wheel", teams: "#view-teams", timer: "#view-timer", dice: "#view-dice", noise: "#view-noise" };
   let current = "home";
   function go(tool) {
     if (!views[tool]) tool = "home";
@@ -163,21 +179,6 @@
       spin();
     }
 
-    function rainDucks() {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const emojis = ["🦆", "⭐", "🎉", "💛"];
-      for (let i = 0; i < 14; i++) {
-        const d = document.createElement("div");
-        d.className = "confetti-duck";
-        d.textContent = emojis[rand(emojis.length)];
-        d.style.left = rand(100) + "vw";
-        d.style.animationDuration = 1.6 + Math.random() * 1.4 + "s";
-        d.style.animationDelay = Math.random() * 0.3 + "s";
-        document.body.appendChild(d);
-        setTimeout(() => d.remove(), 3200);
-      }
-    }
-
     function updateHint() {
       const h = $("#pickerHint");
       if (!roster.length) { h.textContent = ""; return; }
@@ -207,6 +208,134 @@
     }
     ENTER.picker = updateHint;
     return { init, updateHint };
+  })();
+
+  /* ============================================================
+     TOOL 1b — SPINNER WHEEL
+     ============================================================ */
+  const Wheel = (() => {
+    const PAL = ["#ffd23f", "#ff9f1c", "#ffbf69", "#8ae6dd", "#2ec4b6",
+                 "#b8a6e6", "#ff7b8c", "#8ab6ff", "#06d6a0", "#f4a900"];
+    let names = [];
+    let rotation = -Math.PI / 2; // start with segment 0 under the pointer
+    let spinning = false;
+    let lastTickIdx = -1;
+    const TAU = Math.PI * 2;
+
+    function canvas() { return $("#wheelCanvas"); }
+
+    function draw() {
+      const c = canvas();
+      if (!c) return;
+      const ctx = c.getContext("2d");
+      const size = c.width, R = size / 2, r = R - 6;
+      ctx.clearRect(0, 0, size, size);
+      const n = names.length;
+      if (!n) {
+        ctx.beginPath(); ctx.arc(R, R, r, 0, TAU);
+        ctx.fillStyle = "#e9dcc0"; ctx.fill();
+        ctx.fillStyle = "#8a7a5f"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = "600 26px system-ui, sans-serif";
+        ctx.fillText("Add students", R, R - 16);
+        ctx.fillText("to the roster", R, R + 16);
+        return;
+      }
+      const seg = TAU / n;
+      for (let i = 0; i < n; i++) {
+        const a0 = rotation + i * seg;
+        ctx.beginPath();
+        ctx.moveTo(R, R);
+        ctx.arc(R, R, r, a0, a0 + seg);
+        ctx.closePath();
+        ctx.fillStyle = PAL[i % PAL.length];
+        ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.stroke();
+        // label
+        ctx.save();
+        ctx.translate(R, R);
+        ctx.rotate(a0 + seg / 2);
+        ctx.textAlign = "right"; ctx.textBaseline = "middle";
+        ctx.fillStyle = "#2b2118";
+        const fs = clamp(Math.round(seg * 90), 12, 26);
+        ctx.font = `800 ${fs}px "Baloo 2", system-ui, sans-serif`;
+        let label = names[i];
+        if (label.length > 13) label = label.slice(0, 12) + "…";
+        ctx.fillText(label, r - 14, 0);
+        ctx.restore();
+      }
+      // outer rim
+      ctx.beginPath(); ctx.arc(R, R, r, 0, TAU);
+      ctx.lineWidth = 6; ctx.strokeStyle = "rgba(0,0,0,.14)"; ctx.stroke();
+    }
+
+    // Which segment currently sits under the top pointer (screen angle -π/2)?
+    function indexUnderPointer() {
+      const n = names.length, seg = TAU / n;
+      let a = (-Math.PI / 2 - rotation) % TAU;
+      if (a < 0) a += TAU;
+      return Math.floor(a / seg) % n;
+    }
+
+    function spin() {
+      if (spinning) return;
+      if (!names.length) { toast("Add students to your roster first 🦆"); openRoster(); return; }
+      spinning = true;
+      $("#wheelSpin").disabled = true;
+      $("#wheelResult").classList.remove("win");
+      $("#wheelResult").textContent = "…";
+      ensureAudio();
+      const n = names.length, seg = TAU / n;
+      const winner = rand(n);
+      const turns = 5 + rand(3);
+      // rotation that puts winner's center under the pointer, plus full spins
+      const target = -Math.PI / 2 - (winner * seg + seg / 2) - TAU * turns;
+      const start = rotation;
+      const dur = 4200;
+      const t0 = performance.now();
+      lastTickIdx = indexUnderPointer();
+      const frame = (now) => {
+        const t = clamp((now - t0) / dur, 0, 1);
+        const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
+        rotation = start + (target - start) * e;
+        draw();
+        const idx = indexUnderPointer();
+        if (idx !== lastTickIdx) { lastTickIdx = idx; if (t < 0.98) tick(); }
+        if (t < 1) requestAnimationFrame(frame);
+        else finish(winner);
+      };
+      requestAnimationFrame(frame);
+    }
+
+    function finish(winner) {
+      rotation = ((rotation % TAU) + TAU) % TAU; // normalize to keep numbers small
+      spinning = false;
+      $("#wheelSpin").disabled = false;
+      const name = names[winner];
+      const res = $("#wheelResult");
+      res.textContent = "🎉 " + name + "!";
+      void res.offsetWidth; res.classList.add("win");
+      fanfare(); rainDucks();
+      if ($("#wheelRemove").checked && names.length > 1) {
+        names.splice(winner, 1);
+        rotation = -Math.PI / 2;
+        setTimeout(draw, 900);
+      }
+    }
+
+    function rebuild() {
+      names = roster.slice();
+      rotation = -Math.PI / 2;
+      $("#wheelResult").textContent = "Give it a spin!";
+      $("#wheelResult").classList.remove("win");
+      draw();
+    }
+
+    function init() {
+      $("#wheelSpin").addEventListener("click", spin);
+      $("#wheelReset").addEventListener("click", () => { if (!spinning) { rebuild(); toast("Wheel reset 🔄"); } });
+    }
+    ENTER.wheel = () => { if (!spinning) rebuild(); };
+    return { init };
   })();
 
   /* ============================================================
@@ -436,15 +565,31 @@
       spin();
     }
 
+    function flip() {
+      const coin = $("#coin"), face = $("#coinFace");
+      const heads = Math.random() < 0.5;
+      coin.classList.remove("flipping");
+      void coin.offsetWidth;
+      coin.classList.add("flipping");
+      $("#coinOut").textContent = "…";
+      setTimeout(() => {
+        face.textContent = heads ? "🦆" : "⭐";
+        $("#coinOut").textContent = heads ? "Heads! 🦆" : "Tails! ⭐";
+        quack(heads ? 1 : 1.4);
+      }, 950);
+    }
+
     function setMode(m) {
       $$('[data-dmode]').forEach((b) => b.classList.toggle("is-on", b.dataset.dmode === m));
       $("#diceMode").hidden = m !== "dice";
       $("#numberMode").hidden = m !== "number";
+      $("#coinMode").hidden = m !== "coin";
     }
 
     function init() {
       $("#rollBtn").addEventListener("click", roll);
       $("#genNumber").addEventListener("click", generate);
+      $("#flipCoin").addEventListener("click", flip);
       $$(".dice-count").forEach((c) => c.addEventListener("click", () => setCount(Number(c.dataset.n))));
       $$('[data-dmode]').forEach((b) => b.addEventListener("click", () => setMode(b.dataset.dmode)));
       roll(); // seed one die
@@ -596,7 +741,7 @@
     applySound();
 
     // wire up tools
-    Picker.init(); Teams.init(); Timer.init(); Dice.init(); Noise.init();
+    Picker.init(); Wheel.init(); Teams.init(); Timer.init(); Dice.init(); Noise.init();
 
     // navigation
     $$(".tool-card[data-tool]").forEach((c) => c.addEventListener("click", () => go(c.dataset.tool)));

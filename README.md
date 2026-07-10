@@ -11,9 +11,10 @@ tracking — and it works with no internet connection.
 | | Tool | What it does |
 |---|------|--------------|
 | 🎯 | **Duck Picker** | Randomly picks a student. "No repeats" mode makes sure everyone gets a turn before anyone goes twice. |
+| 🎡 | **Spinner Wheel** | A big, spinnable wheel of student names with a satisfying ratchet and confetti. Optionally removes each name after it's picked. |
 | 🪺 | **Team Maker** | Splits the class into teams — either _N teams_ or _N per team_ — with color‑coded, duck‑named groups. |
 | ⏱️ | **Timer** | Big, glanceable countdown with a progress ring, quick presets, gentle final‑seconds ticks and a quack when time's up. |
-| 🎲 | **Dice & Numbers** | Roll 1–4 dice or generate a random number in any range. |
+| 🎲 | **Dice, Numbers & Coin** | Roll 1–4 dice, generate a random number in any range, or flip a coin. |
 | 📢 | **Noise Meter** | Uses the device mic to show a live volume meter and warns the class when it gets too loud. |
 
 ## Highlights for teachers
