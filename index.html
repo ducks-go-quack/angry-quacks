@@ -266,24 +266,22 @@
 
       <div id="diceMode">
         <div class="stage dice-stage" id="diceStage"></div>
-        <div class="presets dice-sizes" role="group" aria-label="Die type">
-          <button class="chip dice-size" data-sides="4">D4</button>
-          <button class="chip dice-size is-on" data-sides="6">D6</button>
-          <button class="chip dice-size" data-sides="8">D8</button>
-          <button class="chip dice-size" data-sides="10">D10</button>
-          <button class="chip dice-size" data-sides="12">D12</button>
-          <button class="chip dice-size" data-sides="20">D20</button>
-          <button class="chip dice-size" data-sides="50">D50</button>
-          <button class="chip dice-size" data-sides="100">D100</button>
-        </div>
-        <div class="presets" role="group" aria-label="How many dice">
-          <button class="chip dice-count is-on" data-n="1">1 die</button>
-          <button class="chip dice-count" data-n="2">2 dice</button>
-          <button class="chip dice-count" data-n="3">3 dice</button>
-          <button class="chip dice-count" data-n="4">4 dice</button>
+        <div class="dice-pool" id="dicePool" aria-live="polite" aria-label="Your dice"></div>
+        <div class="presets dice-adders" role="group" aria-label="Add a die to the pool">
+          <button class="chip dice-add" data-sides="4">+ D4</button>
+          <button class="chip dice-add" data-sides="6">+ D6</button>
+          <button class="chip dice-add" data-sides="8">+ D8</button>
+          <button class="chip dice-add" data-sides="10">+ D10</button>
+          <button class="chip dice-add" data-sides="12">+ D12</button>
+          <button class="chip dice-add" data-sides="20">+ D20</button>
+          <button class="chip dice-add" data-sides="50">+ D50</button>
+          <button class="chip dice-add" data-sides="100">+ D100</button>
         </div>
         <div class="controls">
-          <button class="btn btn-primary big" id="rollBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg>Roll</button>
+          <div class="dice-actions">
+            <button class="btn btn-primary big" id="rollBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg>Roll</button>
+            <button class="btn btn-ghost" id="diceClear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Clear</button>
+          </div>
           <p class="hint" id="diceTotal"></p>
         </div>
       </div>
