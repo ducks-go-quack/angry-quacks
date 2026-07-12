@@ -145,20 +145,37 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
   }
 
-  // Celebratory falling confetti — shared by the picker and the wheel.
-  const CONFETTI_COLORS = ["#0d9488", "#0ea5e9", "#7c3aed", "#22c55e", "#f59e0b", "#ef4444"];
-  function rainDucks() {
+  // Celebratory confetti that EXPLODES outward from a point, then rains down.
+  // Shared by the picker and the wheel; pass the element to burst from.
+  const CONFETTI_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+  function rainDucks(originEl) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    for (let i = 0; i < 16; i++) {
+    const rect = originEl && originEl.getBoundingClientRect();
+    const ox = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const oy = rect ? rect.top + rect.height / 2 : window.innerHeight * 0.4;
+    const N = 44;
+    for (let i = 0; i < N; i++) {
       const d = document.createElement("div");
       d.className = "confetti";
       d.style.background = CONFETTI_COLORS[rand(CONFETTI_COLORS.length)];
-      d.style.left = rand(100) + "vw";
+      d.style.left = ox + "px";
+      d.style.top = oy + "px";
       d.style.borderRadius = Math.random() < 0.5 ? "2px" : "50%";
-      d.style.animationDuration = 1.6 + Math.random() * 1.4 + "s";
-      d.style.animationDelay = Math.random() * 0.3 + "s";
+      // fling each piece outward on its own angle, then let gravity pull it down
+      const ang = Math.random() * Math.PI * 2;
+      const speed = 70 + Math.random() * 190;
+      const dx = Math.cos(ang) * speed;
+      const dy = Math.sin(ang) * speed;
+      const gravity = 150 + Math.random() * 160;
+      const rot = Math.random() * 900 - 450;
+      const dur = 900 + Math.random() * 750;
+      d.animate([
+        { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1 },
+        { transform: `translate(calc(-50% + ${dx * 0.7}px), calc(-50% + ${dy * 0.7 - 30}px)) rotate(${rot * 0.6}deg)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + gravity}px)) rotate(${rot}deg)`, opacity: 0 },
+      ], { duration: dur, easing: "cubic-bezier(.2, .7, .3, 1)", fill: "forwards" });
       document.body.appendChild(d);
-      setTimeout(() => d.remove(), 3200);
+      setTimeout(() => d.remove(), dur + 120);
     }
   }
 
@@ -236,7 +253,7 @@
           el.classList.add("win");
           $("#pickBtn").disabled = false;
           fanfare();
-          if (Settings.value("picker", "confetti", true)) rainDucks();
+          if (Settings.value("picker", "confetti", true)) rainDucks(el);
           if ($("#noRepeat").checked && !pickedThisRound.includes(winner)) pickedThisRound.push(winner);
           updateHint();
         }
@@ -281,9 +298,9 @@
      TOOL 1b — SPINNER WHEEL
      ============================================================ */
   const Wheel = (() => {
-    const PAL = ["#5eead4", "#7dd3fc", "#c4b5fd", "#86efac", "#fde68a",
-                 "#fca5a5", "#99f6e4", "#a5b4fc", "#67e8f9", "#d8b4fe"];
-    const LABEL_COLOR = "#1f2430"; // fixed dark text reads on all pastel segments
+    // Vivid, high-energy wheel palette (bold text is outlined so it reads on any hue).
+    const PAL = ["#ef4444", "#f97316", "#f59e0b", "#eab308", "#84cc16", "#22c55e",
+                 "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#ec4899", "#f43f5e"];
     let names = [];
     let rotation = -Math.PI / 2; // start with segment 0 under the pointer
     let spinning = false;
@@ -318,18 +335,19 @@
         ctx.closePath();
         ctx.fillStyle = PAL[i % PAL.length];
         ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.stroke();
-        // label
+        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.stroke();
+        // label — white with a dark outline so it pops on any vivid segment
         ctx.save();
         ctx.translate(R, R);
         ctx.rotate(a0 + seg / 2);
         ctx.textAlign = "right"; ctx.textBaseline = "middle";
-        ctx.fillStyle = LABEL_COLOR;
         const fs = clamp(Math.round(seg * 90), 12, 26);
-        ctx.font = `700 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
+        ctx.font = `800 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
         let label = names[i];
         if (label.length > 13) label = label.slice(0, 12) + "…";
-        ctx.fillText(label, r - 14, 0);
+        ctx.lineJoin = "round"; ctx.lineWidth = 3.5;
+        ctx.strokeStyle = "rgba(0,0,0,.4)"; ctx.strokeText(label, r - 14, 0);
+        ctx.fillStyle = "#fff"; ctx.fillText(label, r - 14, 0);
         ctx.restore();
       }
       // outer rim
@@ -351,34 +369,64 @@
       return (own && own.length) ? own.slice() : roster.slice();
     }
 
-    function spin() {
-      if (spinning) return;
+    // ---- spin physics (velocity in radians/ms) ----
+    const FRICTION = 0.9975;   // velocity retained per ms while coasting
+    const STOP_VEL = 0.0011;   // below this the wheel eases to the nearest segment
+    const MAX_VEL = 0.09;      // clamp flings so they can't spin absurdly fast
+    let velocity = 0, raf = 0, dragging = false;
+    let ptrId = null, lastAngle = 0, lastMoveT = 0, downAngle = 0, downT = 0, moved = 0;
+
+    function busy() { return dragging || raf !== 0; }
+
+    // Kick the wheel off in a random direction — used by the SPIN button / a tap.
+    function randomSpin() {
+      if (busy()) return;
       if (!names.length) { toast("Add students to the wheel first"); Blade.open("wheel"); return; }
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      launch(dir * (0.05 + Math.random() * 0.025));
+    }
+
+    // Coast with the given angular velocity (sign = direction), decelerating to a stop.
+    function launch(v) {
+      if (!names.length) return;
+      cancelAnimationFrame(raf);
       spinning = true;
+      velocity = clamp(v, -MAX_VEL, MAX_VEL);
       $("#wheelSpin").disabled = true;
       $("#wheelResult").classList.remove("win");
       $("#wheelResult").textContent = "…";
       ensureAudio();
-      const n = names.length, seg = TAU / n;
-      const winner = rand(n);
-      const turns = 5 + rand(3);
-      // rotation that puts winner's center under the pointer, plus full spins
-      const target = -Math.PI / 2 - (winner * seg + seg / 2) - TAU * turns;
-      const start = rotation;
-      const dur = 4200;
-      const t0 = performance.now();
       lastTickIdx = indexUnderPointer();
+      let prev = performance.now();
       const frame = (now) => {
-        const t = clamp((now - t0) / dur, 0, 1);
-        const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
-        rotation = start + (target - start) * e;
+        const dt = Math.min(now - prev, 40); prev = now;
+        rotation += velocity * dt;
+        velocity *= Math.pow(FRICTION, dt);
         draw();
         const idx = indexUnderPointer();
-        if (idx !== lastTickIdx) { lastTickIdx = idx; if (t < 0.98) tick(); }
-        if (t < 1) requestAnimationFrame(frame);
-        else finish(winner);
+        if (idx !== lastTickIdx) { lastTickIdx = idx; tick(); }
+        if (Math.abs(velocity) > STOP_VEL) { raf = requestAnimationFrame(frame); }
+        else { raf = 0; settle(); }
       };
-      requestAnimationFrame(frame);
+      raf = requestAnimationFrame(frame);
+    }
+
+    // Gently center the segment under the pointer for a crisp finish, then announce.
+    function settle() {
+      const n = names.length, seg = TAU / n;
+      const idx = indexUnderPointer();
+      let target = -Math.PI / 2 - (idx * seg + seg / 2);
+      target += Math.round((rotation - target) / TAU) * TAU; // nearest equivalent angle
+      const start = rotation, t0 = performance.now(), dur = 380;
+      const frame = (now) => {
+        const t = clamp((now - t0) / dur, 0, 1);
+        const e = 1 - Math.pow(1 - t, 3);
+        rotation = start + (target - start) * e;
+        draw();
+        if (t < 1) { raf = requestAnimationFrame(frame); }
+        else { raf = 0; finish(idx); }
+      };
+      raf = requestAnimationFrame(frame);
     }
 
     function finish(winner) {
@@ -390,12 +438,56 @@
       res.textContent = name;
       void res.offsetWidth; res.classList.add("win");
       fanfare();
-      if (Settings.value("wheel", "confetti", true)) rainDucks();
+      if (Settings.value("wheel", "confetti", true)) rainDucks(res);
       if ($("#wheelRemove").checked && names.length > 1) {
         names.splice(winner, 1);
         rotation = -Math.PI / 2;
         setTimeout(draw, 900);
       }
+    }
+
+    // ---- drag-to-spin (mouse + touch), flings either direction ----
+    function angleAt(clientX, clientY) {
+      const rect = canvas().getBoundingClientRect();
+      return Math.atan2(clientY - (rect.top + rect.height / 2), clientX - (rect.left + rect.width / 2));
+    }
+    function norm(a) { while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU; return a; }
+
+    function onDown(e) {
+      if (!names.length) { randomSpin(); return; } // empty wheel: prompt to add names
+      cancelAnimationFrame(raf); raf = 0;          // catch a coasting wheel
+      velocity = 0; dragging = true; moved = 0;
+      ptrId = e.pointerId;
+      downAngle = lastAngle = angleAt(e.clientX, e.clientY);
+      downT = lastMoveT = performance.now();
+      spinning = true; $("#wheelSpin").disabled = true;
+      $("#wheelResult").classList.remove("win");
+      canvas().classList.add("grabbing");
+      try { canvas().setPointerCapture(ptrId); } catch (_) {}
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging || e.pointerId !== ptrId) return;
+      const a = angleAt(e.clientX, e.clientY);
+      const da = norm(a - lastAngle);
+      const now = performance.now();
+      const dt = now - lastMoveT;
+      rotation += da;
+      moved += Math.abs(da);
+      if (dt > 0) velocity = da / dt; // instantaneous angular velocity for the fling
+      lastAngle = a; lastMoveT = now;
+      draw();
+      e.preventDefault();
+    }
+    function onUp(e) {
+      if (!dragging || e.pointerId !== ptrId) return;
+      dragging = false; ptrId = null;
+      canvas().classList.remove("grabbing");
+      const quick = performance.now() - downT < 250;
+      // A tap (barely moved, quick) acts like pressing SPIN; a drag flings the wheel.
+      if (moved < 0.08 && quick) { spinning = false; randomSpin(); return; }
+      // If they released with almost no motion, still resolve to whoever's on top.
+      launch(Math.abs(velocity) < 0.0004 ? (velocity >= 0 ? STOP_VEL : -STOP_VEL) : velocity);
     }
 
     function rebuild() {
@@ -407,13 +499,19 @@
     }
 
     function init() {
-      $("#wheelSpin").addEventListener("click", spin);
-      $("#wheelReset").addEventListener("click", () => { if (!spinning) { rebuild(); toast("Wheel reset"); } });
+      $("#wheelSpin").addEventListener("click", randomSpin);
+      $("#wheelReset").addEventListener("click", () => { if (!busy()) { rebuild(); toast("Wheel reset"); } });
+      // drag the wheel itself to spin it — either direction — on mouse or touch
+      const c = canvas();
+      c.addEventListener("pointerdown", onDown);
+      c.addEventListener("pointermove", onMove);
+      c.addEventListener("pointerup", onUp);
+      c.addEventListener("pointercancel", onUp);
       // redraw once the web font loads so segment labels use Plus Jakarta Sans
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (current === "wheel") draw(); });
     }
-    ENTER.wheel = () => { if (!spinning) rebuild(); };
-    REFRESH.wheel = () => { if (!spinning) rebuild(); };
+    ENTER.wheel = () => { if (!busy()) rebuild(); };
+    REFRESH.wheel = () => { if (!busy()) rebuild(); };
     return { init };
   })();
 
@@ -503,7 +601,7 @@
     const CIRC = 2 * Math.PI * 54; // matches r=54 in svg
     let total = 300, remaining = 300;
     let running = false, endAt = 0, raf = 0;
-    let lastWholeSecond = -1, ringingTimeout = 0;
+    let lastWholeSecond = -1, ringingTimeout = 0, editing = false;
 
     function fmt(s) {
       s = Math.max(0, Math.ceil(s));
@@ -590,6 +688,41 @@
 
     function reset() { setTotal(total); toast("Timer reset"); }
 
+    // Click the big display to type a time: "mm:ss", or a bare number of minutes.
+    function parseTime(str) {
+      str = String(str).trim();
+      if (!str) return null;
+      if (str.includes(":")) {
+        const parts = str.split(":");
+        const mm = parseInt(parts[0], 10) || 0;
+        const ss = parseInt(parts[1], 10) || 0;
+        return mm * 60 + ss;
+      }
+      const n = parseFloat(str);
+      return isNaN(n) ? null : Math.round(n * 60); // bare number = minutes
+    }
+    function beginEdit() {
+      if (running || editing) return;
+      editing = true;
+      const el = $("#timerDisplay");
+      el.contentEditable = "true";
+      el.classList.add("editing");
+      el.setAttribute("aria-live", "off");
+      el.focus();
+      const range = document.createRange(); range.selectNodeContents(el);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    }
+    function commitEdit(cancel) {
+      if (!editing) return;
+      editing = false;
+      const el = $("#timerDisplay");
+      el.contentEditable = "false";
+      el.classList.remove("editing");
+      const sec = cancel ? null : parseTime(el.textContent);
+      if (sec != null) { setTotal(clamp(sec, 0, 5999)); toast("Time set"); }
+      else draw(); // revert to the current value
+    }
+
     function init() {
       total = remaining = store.get("timerTotal", 300);
       draw(); highlightPreset();
@@ -600,9 +733,17 @@
       $("#tMinus").addEventListener("click", () => adjust(-60));
       $$(".presets .chip[data-sec]").forEach((c) =>
         c.addEventListener("click", () => setTotal(Number(c.dataset.sec))));
+      const disp = $("#timerDisplay");
+      disp.addEventListener("click", beginEdit);
+      disp.addEventListener("blur", () => commitEdit(false));
+      disp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); disp.blur(); }
+        else if (e.key === "Escape") { e.preventDefault(); commitEdit(true); disp.blur(); }
+      });
     }
     // stop counting/ringing when navigating away
     LEAVE.timer = () => {
+      commitEdit(true);
       cancelAnimationFrame(raf); running = false;
       $(".timer-stage").classList.remove("ringing");
       $("#timerToggle").innerHTML = ICONS.play + (remaining < total && remaining > 0 ? "Resume" : "Start");
@@ -733,23 +874,30 @@
      TOOL 4 — DICE & NUMBERS
      ============================================================ */
   const Dice = (() => {
-    let count = 1;
+    let count = 1, sides = 6;
     const PIP_MAP = {
       1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8],
       5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8],
     };
 
-    function dieHtml(val) {
+    // A classic pip die (only makes sense for a six-sided die).
+    function pipDieHtml(val) {
       let cells = "";
       const pips = PIP_MAP[val];
       for (let i = 0; i < 9; i++) cells += pips.includes(i) ? '<span class="pip"></span>' : "<span></span>";
       return `<div class="die" role="img" aria-label="Rolled a ${val}">${cells}</div>`;
     }
+    // A numeric die for polyhedral sizes (D4/8/10/12/20/50/100).
+    function numDieHtml(val, s) {
+      const big = val >= 100 ? " three" : val >= 10 ? " two" : "";
+      return `<div class="die die-num" role="img" aria-label="Rolled a ${val} on a d${s}">` +
+        `<span class="die-val${big}">${val}</span><span class="die-kind">d${s}</span></div>`;
+    }
 
     function roll() {
       const stage = $("#diceStage");
-      const vals = Array.from({ length: count }, () => 1 + rand(6));
-      stage.innerHTML = vals.map(dieHtml).join("");
+      const vals = Array.from({ length: count }, () => 1 + rand(sides));
+      stage.innerHTML = vals.map((v) => (sides === 6 ? pipDieHtml(v) : numDieHtml(v, sides))).join("");
       const total = vals.reduce((a, b) => a + b, 0);
       $("#diceTotal").textContent = count > 1 ? `Total: ${total}` : "";
       quack(1 + (total % 4) * 0.15);
@@ -757,7 +905,15 @@
 
     function setCount(n) {
       count = n;
+      Settings.set("dice", "count", n);
       $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === n));
+      roll();
+    }
+
+    function setSides(s) {
+      sides = s;
+      Settings.set("dice", "sides", s);
+      $$(".dice-size").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.sides) === s));
       roll();
     }
 
@@ -803,7 +959,9 @@
     // Apply the saved defaults to the UI (used at startup and when settings change).
     function syncDefaults() {
       count = clamp(Settings.value("dice", "count", 1), 1, 4);
+      sides = Settings.value("dice", "sides", 6);
       $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === count));
+      $$(".dice-size").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.sides) === sides));
       $("#numMin").value = Settings.value("dice", "numMin", 1);
       $("#numMax").value = Settings.value("dice", "numMax", 100);
     }
@@ -813,10 +971,11 @@
       $("#genNumber").addEventListener("click", generate);
       $("#flipCoin").addEventListener("click", flip);
       $$(".dice-count").forEach((c) => c.addEventListener("click", () => setCount(Number(c.dataset.n))));
+      $$(".dice-size").forEach((c) => c.addEventListener("click", () => setSides(Number(c.dataset.sides))));
       $$('[data-dmode]').forEach((b) => b.addEventListener("click", () => setMode(b.dataset.dmode)));
       $("#coinFace").innerHTML = ICONS.duck; // seed coin face
       syncDefaults();
-      roll(); // seed with the default number of dice
+      roll(); // seed with the default dice
     }
     REFRESH.dice = syncDefaults;
     return { init };
@@ -838,6 +997,10 @@
         return false;
       }
       ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // The context is created after an await, so the user-gesture may have
+      // lapsed and it can start "suspended" — without resuming it the analyser
+      // only ever sees silence. This is what makes the meter look dead.
+      if (ctx.state === "suspended") { try { await ctx.resume(); } catch (e) {} }
       const src = ctx.createMediaStreamSource(stream);
       analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
@@ -855,7 +1018,7 @@
       let sum = 0;
       for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; sum += v * v; }
       const rms = Math.sqrt(sum / data.length);
-      const level = clamp(Math.round(rms * 320), 0, 100);
+      const level = clamp(Math.round(rms * 400), 0, 100);
       render(level);
       raf = requestAnimationFrame(loop);
     }

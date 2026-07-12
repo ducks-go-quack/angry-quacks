@@ -276,13 +276,12 @@ svg { display: block; }
 .picked-name.win { animation: pop .5s cubic-bezier(.2, 1.4, .4, 1); color: var(--accent-text); }
 @keyframes pop { 0% { transform: scale(.5); opacity: 0; } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
 
-/* Celebratory confetti (recolored chips, no emoji) */
+/* Celebratory confetti — bursts outward from a point (motion set in JS). */
 .confetti {
-  position: fixed; top: -20px; z-index: 60;
-  width: 9px; height: 9px; border-radius: 2px; pointer-events: none;
-  animation: fall linear forwards;
+  position: fixed; z-index: 60;
+  width: 10px; height: 10px; border-radius: 2px; pointer-events: none;
+  will-change: transform, opacity;
 }
-@keyframes fall { to { transform: translateY(105vh) rotate(400deg); opacity: .9; } }
 
 /* Segmented control */
 .seg {
@@ -304,9 +303,10 @@ svg { display: block; }
 .stepper-val span { display: block; font-size: 2.6rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
 .stepper-val small { color: var(--text-3); font-weight: 600; }
 .teams-out {
-  display: grid; gap: 14px; margin-top: 24px;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 14px; margin-top: 24px;
 }
+.teams-out .team { flex: 0 1 190px; }
 .team {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm);
@@ -328,11 +328,12 @@ svg { display: block; }
 }
 .ring-fg.warn { stroke: var(--danger); }
 .timer-face { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
-.timer-display { font-size: clamp(2.6rem, 14vw, 4.2rem); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.timer-display { font-size: clamp(2.6rem, 14vw, 4.2rem); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; cursor: pointer; }
+.timer-display.editing { cursor: text; outline: 3px solid var(--accent); outline-offset: 8px; border-radius: 12px; color: var(--accent-text); }
 .timer-sub { color: var(--text-3); font-weight: 600; margin-top: 4px; font-size: 14px; }
 .timer-stage.ringing .timer-display { animation: shake .4s ease infinite; color: var(--danger); }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-.timer-controls { flex-direction: row; flex-wrap: wrap; }
+.timer-controls { flex-direction: row; flex-wrap: wrap; justify-content: center; }
 .timer-display small { font-size: .45em; font-weight: 700; color: var(--text-3); }
 
 .presets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
@@ -358,7 +359,8 @@ svg { display: block; }
 .laps li .lap-split { color: var(--text-3); font-weight: 500; font-size: .9em; }
 
 /* Dice */
-.dice-stage { display: flex; flex-wrap: wrap; gap: 14px; min-height: 200px; }
+.dice-stage { display: flex; flex-wrap: wrap; gap: 14px; min-height: 200px; justify-content: center; align-content: center; }
+.dice-sizes { margin-bottom: 2px; }
 .die {
   width: 76px; height: 76px; background: var(--surface); border-radius: var(--radius-sm);
   border: 1px solid var(--border); box-shadow: var(--shadow-sm);
@@ -366,6 +368,12 @@ svg { display: block; }
   padding: 12px; gap: 4px;
   animation: tumble .5s ease;
 }
+/* Numeric (polyhedral) die face */
+.die.die-num { grid-template: none; place-items: center; padding: 6px; position: relative; }
+.die-num .die-val { font-weight: 800; font-size: 2.1rem; line-height: 1; color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.die-num .die-val.two { font-size: 1.7rem; }
+.die-num .die-val.three { font-size: 1.35rem; }
+.die-num .die-kind { position: absolute; right: 7px; bottom: 5px; font-size: 10px; font-weight: 700; color: var(--text-3); letter-spacing: .02em; }
 @keyframes tumble { 0% { transform: rotate(-25deg) scale(.6); } 60% { transform: rotate(12deg) scale(1.08); } 100% { transform: rotate(0) scale(1); } }
 .die .pip { border-radius: 50%; background: var(--accent); align-self: center; justify-self: center; width: 12px; height: 12px; }
 .number-stage { font-size: clamp(3.5rem, 20vw, 6.5rem); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
@@ -383,7 +391,11 @@ svg { display: block; }
 /* Spinner Wheel */
 .wheel-stage { gap: 20px; background: transparent; border: 0; box-shadow: none; }
 .wheel-wrap { position: relative; width: min(80vw, 340px); aspect-ratio: 1; }
-#wheelCanvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: var(--shadow); }
+#wheelCanvas {
+  width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: var(--shadow);
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+#wheelCanvas.grabbing { cursor: grabbing; }
 .wheel-pointer {
   position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
   width: 0; height: 0; z-index: 3;
