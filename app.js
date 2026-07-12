@@ -19,6 +19,23 @@
     set(key, val) { try { localStorage.setItem("qp_" + key, JSON.stringify(val)); } catch (e) {} },
   };
 
+  /* -------------------- per-tool settings (persisted to browser cache) --------------------
+     Each tool owns a small bag of options under settings[tool]. Tools read the
+     current value at the point of use, so changes made in a tool's settings blade
+     take effect immediately and survive a page reload. */
+  const Settings = {
+    all: store.get("settings", {}),
+    // Current value for tool.key, or `fallback` if the user hasn't set it.
+    value(tool, key, fallback) {
+      const t = this.all[tool];
+      return t && Object.prototype.hasOwnProperty.call(t, key) ? t[key] : fallback;
+    },
+    set(tool, key, val) {
+      (this.all[tool] || (this.all[tool] = {}))[key] = val;
+      store.set("settings", this.all);
+    },
+  };
+
   /* -------------------- inline SVG icons (design system) -------------------- */
   const svg = (inner, sw = 1.8) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
@@ -33,6 +50,7 @@
     soundOff: svg('<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>'),
     duck: svg('<path d="M15.5 7.5a3 3 0 1 0-4.9 2.35"/><path d="M10.6 9.85C7.5 10.6 5.5 12.7 5.5 15.2c0 .9.7 1.6 1.6 1.6h5.4a5 5 0 0 0 5-5c0-1.2-.9-2.2-2-2.4"/><path d="M15.5 7.5 19 6l-1.3 3"/>'),
     star: svg('<path d="M12 3l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L12 17.8 6.2 21.3l1.6-6.6L2.6 9.8l6.8-.5z"/>'),
+    gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1l-.3-2.5H9.9l-.3 2.5a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L5.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.3 2.5h4.2l.3-2.5a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5z"/>'),
   };
   const face = (mouth) => svg('<circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.6"/>' + mouth);
   const FACES = {
@@ -162,6 +180,9 @@
   }
   const ENTER = {};
   const LEAVE = {};
+  // Called when a tool's settings change while its view is on screen, so the
+  // tool can re-render live. Populated by each tool module below.
+  const REFRESH = {};
 
   /* ============================================================
      TOOL 1 — DUCK PICKER
@@ -170,20 +191,28 @@
     let pickedThisRound = [];
     const nameEl = () => $("#pickedName");
 
+    // The picker keeps its own student list; when it's empty we fall back to
+    // the shared class roster so the tool still works out of the box.
+    function pool() {
+      const own = Settings.value("picker", "names", []);
+      return (own && own.length) ? own.slice() : roster.slice();
+    }
+
     function available() {
-      const notPicked = roster.filter((n) => !pickedThisRound.includes(n));
-      return $("#noRepeat").checked ? notPicked : roster.slice();
+      const source = pool();
+      const notPicked = source.filter((n) => !pickedThisRound.includes(n));
+      return $("#noRepeat").checked ? notPicked : source;
     }
 
     function pick() {
-      if (!roster.length) { toast("Add students to your roster first"); openRoster(); return; }
-      let pool = available();
-      if (!pool.length) {
+      if (!pool().length) { toast("Add students to pick from first"); Blade.open("picker"); return; }
+      let choices = available();
+      if (!choices.length) {
         toast("Everyone's had a turn! Starting a new round.");
         pickedThisRound = [];
-        pool = roster.slice();
+        choices = pool();
       }
-      const winner = pool[rand(pool.length)];
+      const winner = choices[rand(choices.length)];
       animateTo(winner);
     }
 
@@ -192,10 +221,11 @@
       el.classList.remove("win");
       el.classList.add("rolling");
       $("#pickBtn").disabled = true;
+      const names = pool();
       let ticks = 0;
       const total = 16 + rand(6);
       const spin = () => {
-        el.textContent = roster[rand(roster.length)];
+        el.textContent = names[rand(names.length)];
         tick();
         ticks++;
         if (ticks < total) {
@@ -206,7 +236,7 @@
           el.classList.add("win");
           $("#pickBtn").disabled = false;
           fanfare();
-          rainDucks();
+          if (Settings.value("picker", "confetti", true)) rainDucks();
           if ($("#noRepeat").checked && !pickedThisRound.includes(winner)) pickedThisRound.push(winner);
           updateHint();
         }
@@ -216,14 +246,15 @@
 
     function updateHint() {
       const h = $("#pickerHint");
-      if (!roster.length) { h.textContent = ""; return; }
+      const total = pool().length;
+      if (!total) { h.textContent = ""; return; }
       if ($("#noRepeat").checked) {
-        const left = roster.length - pickedThisRound.length;
-        h.textContent = left === roster.length
-          ? `${roster.length} ducks ready.`
-          : `${left} of ${roster.length} still to be picked.`;
+        const left = total - pickedThisRound.filter((n) => pool().includes(n)).length;
+        h.textContent = left === total
+          ? `${total} ducks ready.`
+          : `${left} of ${total} still to be picked.`;
       } else {
-        h.textContent = `${roster.length} ducks in the pond.`;
+        h.textContent = `${total} ducks in the pond.`;
       }
     }
 
@@ -242,6 +273,7 @@
       $("#noRepeat").checked = store.get("noRepeat", true);
     }
     ENTER.picker = updateHint;
+    REFRESH.picker = () => { pickedThisRound = pickedThisRound.filter((n) => pool().includes(n)); updateHint(); };
     return { init, updateHint };
   })();
 
@@ -313,9 +345,15 @@
       return Math.floor(a / seg) % n;
     }
 
+    // The wheel keeps its own name list, falling back to the class roster.
+    function source() {
+      const own = Settings.value("wheel", "names", []);
+      return (own && own.length) ? own.slice() : roster.slice();
+    }
+
     function spin() {
       if (spinning) return;
-      if (!names.length) { toast("Add students to your roster first"); openRoster(); return; }
+      if (!names.length) { toast("Add students to the wheel first"); Blade.open("wheel"); return; }
       spinning = true;
       $("#wheelSpin").disabled = true;
       $("#wheelResult").classList.remove("win");
@@ -351,7 +389,8 @@
       const res = $("#wheelResult");
       res.textContent = name;
       void res.offsetWidth; res.classList.add("win");
-      fanfare(); rainDucks();
+      fanfare();
+      if (Settings.value("wheel", "confetti", true)) rainDucks();
       if ($("#wheelRemove").checked && names.length > 1) {
         names.splice(winner, 1);
         rotation = -Math.PI / 2;
@@ -360,7 +399,7 @@
     }
 
     function rebuild() {
-      names = roster.slice();
+      names = source();
       rotation = -Math.PI / 2;
       $("#wheelResult").textContent = "Give it a spin!";
       $("#wheelResult").classList.remove("win");
@@ -374,6 +413,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (current === "wheel") draw(); });
     }
     ENTER.wheel = () => { if (!spinning) rebuild(); };
+    REFRESH.wheel = () => { if (!spinning) rebuild(); };
     return { init };
   })();
 
@@ -383,6 +423,18 @@
   const Teams = (() => {
     let mode = "teams"; // or "size"
     let num = store.get("teamNum", 4);
+
+    const THEME_NAMES = {
+      ducks: ["Mallards", "Teals", "Wigeons", "Pintails", "Goldeneyes", "Mergansers", "Shovelers", "Gadwalls",
+              "Eiders", "Scaups", "Buffleheads", "Canvasbacks"],
+      colours: ["Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Teal", "Pink",
+                "Indigo", "Lime", "Amber", "Cyan"],
+    };
+    function teamName(theme, i) {
+      if (theme === "numbers") return "Team " + (i + 1);
+      const list = THEME_NAMES[theme] || THEME_NAMES.ducks;
+      return list[i % list.length];
+    }
 
     function shuffle(arr) {
       const a = arr.slice();
@@ -408,8 +460,8 @@
         for (let i = 0; i < people.length; i += size) groups.push(people.slice(i, i + size));
       }
       const palette = ["#0d9488", "#0ea5e9", "#7c3aed", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#6366f1"];
-      const names = ["Mallards", "Teals", "Wigeons", "Pintails", "Goldeneyes", "Mergansers", "Shovelers", "Gadwalls",
-                     "Eiders", "Scaups", "Buffleheads", "Canvasbacks"];
+      const theme = Settings.value("teams", "theme", "ducks");
+      const showCount = Settings.value("teams", "counts", true);
       const out = $("#teamsOut");
       out.innerHTML = "";
       groups.forEach((g, i) => {
@@ -417,8 +469,9 @@
         card.className = "team";
         card.style.animationDelay = i * 60 + "ms";
         const c = palette[i % palette.length];
+        const size = showCount ? ` <small>(${g.length})</small>` : "";
         card.innerHTML =
-          `<div class="team-head" style="background:${c}">${names[i % names.length]} <small>(${g.length})</small></div>` +
+          `<div class="team-head" style="background:${c}">${escapeHtml(teamName(theme, i))}${size}</div>` +
           `<ul>${g.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul>`;
         out.appendChild(card);
       });
@@ -472,7 +525,7 @@
       const whole = Math.ceil(remaining);
       if (whole !== lastWholeSecond) {
         lastWholeSecond = whole;
-        if (whole <= 5 && whole > 0) tick();
+        if (whole <= 5 && whole > 0 && Settings.value("timer", "ticks", true)) tick();
       }
       draw();
       if (remaining <= 0) { finish(); return; }
@@ -487,8 +540,10 @@
       $("#timerToggle").innerHTML = ICONS.play + "Start";
       $("#timerSub").textContent = "Time's up!";
       $(".timer-stage").classList.add("ringing");
-      fanfare();
-      setTimeout(fanfare, 700);
+      if (Settings.value("timer", "chime", true)) {
+        fanfare();
+        setTimeout(fanfare, 700);
+      }
       clearTimeout(ringingTimeout);
       ringingTimeout = setTimeout(() => $(".timer-stage").classList.remove("ringing"), 4000);
     }
@@ -575,7 +630,9 @@
     function draw() {
       const ms = running ? elapsed + (performance.now() - startAt) : elapsed;
       const f = fmt(ms);
-      $("#swDisplay").innerHTML = `${f.main}<small>.${f.t}</small>`;
+      $("#swDisplay").innerHTML = Settings.value("stopwatch", "tenths", true)
+        ? `${f.main}<small>.${f.t}</small>`
+        : f.main;
       const frac = (ms % 60000) / 60000; // fills once per minute
       $("#swRing").style.strokeDashoffset = String(CIRC * (1 - frac));
       if (running) raf = requestAnimationFrame(draw);
@@ -621,7 +678,7 @@
         `<span>${total.main}.${total.t}</span>`;
       const list = $("#swLaps");
       list.insertBefore(li, list.firstChild);
-      tick();
+      if (Settings.value("stopwatch", "lapSound", true)) tick();
     }
 
     function init() {
@@ -632,6 +689,7 @@
       draw();
     }
     LEAVE.stopwatch = () => { if (running) stop(); };
+    REFRESH.stopwatch = () => draw();
     return { init };
   })();
 
@@ -639,18 +697,21 @@
      TOOL 3c — TRAFFIC LIGHT
      ============================================================ */
   const Traffic = (() => {
-    const LABELS = {
+    const DEFAULT_LABELS = {
       red: "Silent, please",
       amber: "Whisper voices",
       green: "Talk & work",
     };
     const COLORS = { red: "var(--danger)", amber: "var(--warning)", green: "var(--success)" };
+    function labelFor(state) {
+      return Settings.value("traffic", state + "Label", DEFAULT_LABELS[state]) || DEFAULT_LABELS[state];
+    }
 
     function set(state, opts) {
       $$(".lamp").forEach((l) => l.classList.toggle("on", l.dataset.state === state));
       const label = $("#trafficLabel");
-      if (state && LABELS[state]) {
-        label.textContent = LABELS[state];
+      if (state && COLORS[state]) {
+        label.textContent = labelFor(state);
         label.style.color = COLORS[state];
       } else {
         label.textContent = "Tap a light";
@@ -664,6 +725,7 @@
       $$(".lamp").forEach((l) => l.addEventListener("click", () => set(l.dataset.state)));
     }
     ENTER.traffic = () => set(store.get("traffic", "") || null, { silent: true });
+    REFRESH.traffic = () => set(store.get("traffic", "") || null, { silent: true });
     return { init };
   })();
 
@@ -738,6 +800,14 @@
       $("#coinMode").hidden = m !== "coin";
     }
 
+    // Apply the saved defaults to the UI (used at startup and when settings change).
+    function syncDefaults() {
+      count = clamp(Settings.value("dice", "count", 1), 1, 4);
+      $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === count));
+      $("#numMin").value = Settings.value("dice", "numMin", 1);
+      $("#numMax").value = Settings.value("dice", "numMax", 100);
+    }
+
     function init() {
       $("#rollBtn").addEventListener("click", roll);
       $("#genNumber").addEventListener("click", generate);
@@ -745,8 +815,10 @@
       $$(".dice-count").forEach((c) => c.addEventListener("click", () => setCount(Number(c.dataset.n))));
       $$('[data-dmode]').forEach((b) => b.addEventListener("click", () => setMode(b.dataset.dmode)));
       $("#coinFace").innerHTML = ICONS.duck; // seed coin face
-      roll(); // seed one die
+      syncDefaults();
+      roll(); // seed with the default number of dice
     }
+    REFRESH.dice = syncDefaults;
     return { init };
   })();
 
@@ -808,7 +880,7 @@
       stage.classList.toggle("loud", loud);
       if (loud && performance.now() > alarmCooldown) {
         alarmCooldown = performance.now() + 2500;
-        quack(0.7);
+        if (Settings.value("noise", "alarm", true)) quack(0.7);
       }
     }
 
@@ -837,8 +909,13 @@
     function init() {
       $("#noiseDuck").innerHTML = FACES.idle;
       $("#noiseToggle").addEventListener("click", toggle);
+      // The inline slider and the settings blade share one persisted threshold.
+      $("#noiseThresh").value = Settings.value("noise", "thresh", 65);
+      $("#noiseThresh").addEventListener("input", () =>
+        Settings.set("noise", "thresh", Number($("#noiseThresh").value)));
     }
     LEAVE.noise = () => { if (running) stop(); };
+    REFRESH.noise = () => { $("#noiseThresh").value = Settings.value("noise", "thresh", 65); };
     return { init };
   })();
 
@@ -944,6 +1021,252 @@
   }
 
   /* ============================================================
+     SETTINGS BLADE — per-tool customisation
+     Each tool declares a small list of fields; the blade renders
+     them, persists every change to localStorage via Settings, and
+     calls REFRESH[tool] so the open view updates live.
+     ============================================================ */
+  const TOOL_SETTINGS = {
+    picker: {
+      title: "Duck Picker settings",
+      fields: [
+        { key: "names", type: "roster", label: "Students to pick from",
+          hint: "This picker's own list — one name per line. Leave it empty to use the class roster." },
+        { key: "confetti", type: "toggle", label: "Celebrate the pick with confetti", default: true },
+      ],
+    },
+    wheel: {
+      title: "Spinner Wheel settings",
+      fields: [
+        { key: "names", type: "roster", label: "Names on the wheel",
+          hint: "This wheel's own list — one name per line. Leave it empty to use the class roster." },
+        { key: "confetti", type: "toggle", label: "Celebrate the spin with confetti", default: true },
+      ],
+    },
+    teams: {
+      title: "Team Maker settings",
+      fields: [
+        { key: "theme", type: "select", label: "Team names", default: "ducks",
+          options: [{ value: "ducks", label: "Ducks" }, { value: "colours", label: "Colours" }, { value: "numbers", label: "Numbers" }] },
+        { key: "counts", type: "toggle", label: "Show each team's size", default: true },
+      ],
+    },
+    timer: {
+      title: "Timer settings",
+      fields: [
+        { key: "ticks", type: "toggle", label: "Tick through the final 5 seconds", default: true },
+        { key: "chime", type: "toggle", label: "Quack when time's up", default: true },
+      ],
+    },
+    stopwatch: {
+      title: "Stopwatch settings",
+      fields: [
+        { key: "tenths", type: "toggle", label: "Show tenths of a second", default: true },
+        { key: "lapSound", type: "toggle", label: "Click on each lap", default: true },
+      ],
+    },
+    traffic: {
+      title: "Traffic Light settings",
+      fields: [
+        { key: "redLabel", type: "text", label: "Red light says", default: "Silent, please", maxlength: 40 },
+        { key: "amberLabel", type: "text", label: "Amber light says", default: "Whisper voices", maxlength: 40 },
+        { key: "greenLabel", type: "text", label: "Green light says", default: "Talk & work", maxlength: 40 },
+      ],
+    },
+    dice: {
+      title: "Dice & Numbers settings",
+      fields: [
+        { key: "count", type: "stepper", label: "Default number of dice", default: 1, min: 1, max: 4 },
+        { key: "numMin", type: "number", label: "Default lowest number", default: 1 },
+        { key: "numMax", type: "number", label: "Default highest number", default: 100 },
+      ],
+    },
+    noise: {
+      title: "Noise Meter settings",
+      fields: [
+        { key: "thresh", type: "stepper", label: "Alarm threshold", default: 65, min: 20, max: 95, step: 5, unit: "%" },
+        { key: "alarm", type: "toggle", label: "Quack alarm when it gets too loud", default: true },
+      ],
+    },
+  };
+
+  const Blade = (() => {
+    let openTool = null, lastFocus = null;
+    const el = () => $("#settingsBlade");
+
+    function sval(tool, f) { return Settings.value(tool, f.key, f.default); }
+    function commit(tool, f, val) {
+      Settings.set(tool, f.key, val);
+      if (REFRESH[tool] && current === tool) REFRESH[tool]();
+    }
+
+    function iconBtn(sym) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn btn-ghost step"; b.textContent = sym;
+      return b;
+    }
+
+    function buildToggle(tool, f) {
+      const label = document.createElement("label");
+      label.className = "blade-field switch set-toggle";
+      const input = document.createElement("input");
+      input.type = "checkbox"; input.checked = !!sval(tool, f);
+      const span = document.createElement("span");
+      span.className = "switch-text"; span.textContent = f.label;
+      input.addEventListener("change", () => commit(tool, f, input.checked));
+      label.append(input, span);
+      return label;
+    }
+
+    function buildStepper(tool, f) {
+      const wrap = document.createElement("div");
+      wrap.className = "blade-field row";
+      const lab = document.createElement("div");
+      lab.className = "field-label"; lab.textContent = f.label;
+      const ctl = document.createElement("div"); ctl.className = "mini-stepper";
+      const dec = iconBtn("−"), val = document.createElement("span"), inc = iconBtn("+");
+      val.className = "mini-val";
+      const step = f.step || 1;
+      let cur = clamp(sval(tool, f), f.min, f.max);
+      const show = () => { val.textContent = cur + (f.unit || ""); };
+      show();
+      dec.setAttribute("aria-label", "Decrease " + f.label);
+      inc.setAttribute("aria-label", "Increase " + f.label);
+      dec.addEventListener("click", () => { cur = clamp(cur - step, f.min, f.max); show(); commit(tool, f, cur); });
+      inc.addEventListener("click", () => { cur = clamp(cur + step, f.min, f.max); show(); commit(tool, f, cur); });
+      ctl.append(dec, val, inc);
+      wrap.append(lab, ctl);
+      return wrap;
+    }
+
+    function buildInput(tool, f, kind) {
+      const wrap = document.createElement("label");
+      wrap.className = "blade-field row";
+      const lab = document.createElement("span");
+      lab.className = "field-label"; lab.textContent = f.label;
+      const input = document.createElement("input");
+      input.className = "set-input";
+      input.type = kind === "number" ? "number" : "text";
+      if (kind === "number") input.inputMode = "numeric";
+      if (f.maxlength) input.maxLength = f.maxlength;
+      input.value = sval(tool, f);
+      const read = () => (kind === "number" ? Number(input.value) : input.value);
+      input.addEventListener("input", () => commit(tool, f, read()));
+      wrap.append(lab, input);
+      return wrap;
+    }
+
+    function buildSelect(tool, f) {
+      const wrap = document.createElement("div");
+      wrap.className = "blade-field";
+      const lab = document.createElement("div");
+      lab.className = "field-label"; lab.textContent = f.label;
+      const seg = document.createElement("div");
+      seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", f.label);
+      f.options.forEach((o) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "seg-btn" + (o.value === sval(tool, f) ? " is-on" : "");
+        b.textContent = o.label;
+        b.addEventListener("click", () => {
+          $$(".seg-btn", seg).forEach((x) => x.classList.toggle("is-on", x === b));
+          commit(tool, f, o.value);
+        });
+        seg.append(b);
+      });
+      wrap.append(lab, seg);
+      return wrap;
+    }
+
+    // A per-tool student list editor (independent of the shared class roster).
+    function buildRoster(tool, f) {
+      const wrap = document.createElement("div");
+      wrap.className = "blade-field";
+      const lab = document.createElement("div");
+      lab.className = "field-label"; lab.textContent = f.label;
+      const ta = document.createElement("textarea");
+      ta.className = "set-list"; ta.spellcheck = false;
+      ta.placeholder = "Ada\nGrace\nAlan\n…";
+      ta.value = (sval(tool, f) || []).join("\n");
+      const foot = document.createElement("div");
+      foot.className = "set-list-foot";
+      const load = document.createElement("button");
+      load.type = "button"; load.className = "btn btn-ghost";
+      load.textContent = "Load class roster";
+      const count = document.createElement("span");
+      count.className = "set-count";
+      const refreshCount = () => {
+        const n = parseRoster(ta.value).length;
+        count.textContent = n ? `${n} name${n === 1 ? "" : "s"}` : "using class roster";
+      };
+      const save = () => { commit(tool, f, parseRoster(ta.value)); refreshCount(); };
+      ta.addEventListener("input", save);
+      load.addEventListener("click", () => { ta.value = roster.join("\n"); save(); });
+      refreshCount();
+      foot.append(count, load);
+      wrap.append(lab, ta, foot);
+      if (f.hint) { const h = document.createElement("p"); h.className = "field-hint"; h.textContent = f.hint; wrap.append(h); }
+      return wrap;
+    }
+
+    function buildField(tool, f) {
+      let node;
+      switch (f.type) {
+        case "toggle": node = buildToggle(tool, f); break;
+        case "stepper": node = buildStepper(tool, f); break;
+        case "number": node = buildInput(tool, f, "number"); break;
+        case "text": node = buildInput(tool, f, "text"); break;
+        case "select": node = buildSelect(tool, f); break;
+        case "roster": return buildRoster(tool, f); // owns its own hint
+        default: node = document.createElement("div");
+      }
+      if (f.hint) { const h = document.createElement("p"); h.className = "field-hint"; h.textContent = f.hint; node.append(h); }
+      return node;
+    }
+
+    function open(tool) {
+      const cfg = TOOL_SETTINGS[tool];
+      if (!cfg) return;
+      openTool = tool;
+      lastFocus = document.activeElement;
+      $("#bladeTitle").textContent = cfg.title;
+      const body = $("#bladeBody");
+      body.innerHTML = "";
+      cfg.fields.forEach((f) => body.appendChild(buildField(tool, f)));
+      el().hidden = false;
+      setTimeout(() => $("#closeBlade").focus(), 50);
+    }
+
+    function close() {
+      if (el().hidden) return;
+      el().hidden = true;
+      openTool = null;
+      if (lastFocus) lastFocus.focus();
+    }
+
+    function isOpen() { return !el().hidden; }
+
+    function init() {
+      // Drop a settings button into the head of every tool that has settings.
+      Object.keys(TOOL_SETTINGS).forEach((tool) => {
+        const head = $("#view-" + tool + " .tool-head");
+        if (!head || head.querySelector(".settings-btn")) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "icon-btn settings-btn";
+        btn.setAttribute("aria-label", "Settings");
+        btn.title = "Settings";
+        btn.innerHTML = ICONS.gear;
+        btn.addEventListener("click", () => open(tool));
+        head.appendChild(btn);
+      });
+      $("#closeBlade").addEventListener("click", close);
+      el().addEventListener("click", (e) => { if (e.target === el()) close(); });
+    }
+
+    return { init, open, close, isOpen };
+  })();
+
+  /* ============================================================
      GLOBAL CHROME — theme, sound, nav
      ============================================================ */
   function applyTheme(mode) {
@@ -965,6 +1288,7 @@
 
     // wire up tools
     Picker.init(); Wheel.init(); Teams.init(); Timer.init(); Stopwatch.init(); Traffic.init(); Dice.init(); Noise.init();
+    Blade.init();
 
     // navigation
     $$("[data-tool]").forEach((c) => c.addEventListener("click", () => go(c.dataset.tool)));
@@ -992,9 +1316,11 @@
       applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"));
     $("#soundBtn").addEventListener("click", () => { soundOn = !soundOn; store.set("sound", soundOn); applySound(); if (soundOn) { ensureAudio(); quack(); } });
 
-    // keyboard: Esc closes modal
+    // keyboard: Esc closes whichever overlay is open
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !$("#rosterModal").hidden) closeRoster();
+      if (e.key !== "Escape") return;
+      if (Blade.isOpen()) Blade.close();
+      else if (!$("#rosterModal").hidden) closeRoster();
     });
 
     // browser back/forward

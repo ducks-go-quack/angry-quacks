@@ -513,6 +513,98 @@ svg { display: block; }
 .share-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .share-actions .btn { flex: 1; min-width: 120px; height: 40px; font-size: 13.5px; padding: 0 12px; }
 
+/* ---------- Settings button (in tool head) ---------- */
+.settings-btn { margin-left: auto; }
+
+/* ---------- Settings blade (slide-in drawer) ---------- */
+.blade-backdrop {
+  position: fixed; inset: 0; z-index: 55;
+  background: color-mix(in oklab, #0a0e1a, transparent 42%);
+  backdrop-filter: blur(3px);
+  display: flex; justify-content: flex-end;
+  animation: fadeIn .15s ease;
+}
+.blade-backdrop[hidden] { display: none; }
+.blade {
+  background: var(--surface);
+  width: min(430px, 100%); height: 100%;
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+  box-shadow: -28px 0 70px -20px rgba(0, 0, 0, .5);
+  animation: bladeIn .3s cubic-bezier(.2, .9, .3, 1);
+}
+@keyframes bladeIn { from { transform: translateX(36px); opacity: .4; } }
+/* On small screens, become a bottom sheet like the roster modal */
+@media (max-width: 559px) {
+  .blade-backdrop { justify-content: center; align-items: flex-end; }
+  .blade {
+    width: 100%; height: auto; max-height: 88dvh;
+    border-left: 0; border-top: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
+    box-shadow: 0 -24px 60px -18px rgba(0, 0, 0, .5);
+    animation: sheet .3s cubic-bezier(.2, .9, .3, 1);
+  }
+}
+.blade-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+}
+.blade-head h2 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.blade-body {
+  flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain;
+  padding: 20px 20px 8px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.blade-foot {
+  flex: 0 0 auto;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+.blade-note { color: var(--text-3); font-size: 12px; font-family: var(--mono); letter-spacing: .04em; }
+
+/* Blade fields */
+.blade-field { display: flex; flex-direction: column; gap: 10px; }
+.blade-field.row { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+.field-label { font-weight: 600; font-size: 14px; color: var(--text); }
+.field-hint { color: var(--text-3); font-size: 12.5px; line-height: 1.5; margin: 0; }
+.blade-field .switch { align-items: flex-start; }
+
+/* toggle rows reuse .switch — lay the label out to the left of the track */
+.blade-field.set-toggle { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+.blade-field.set-toggle .switch-text { font-weight: 600; font-size: 14px; color: var(--text); flex: 1; }
+
+/* mini stepper */
+.mini-stepper { display: flex; align-items: center; gap: 12px; }
+.mini-stepper .step { height: 38px; min-width: 38px; padding: 0; }
+.mini-val { min-width: 62px; text-align: center; font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+
+/* number / text input fields */
+.blade-field .set-input {
+  font-family: var(--font); font-size: 15px; font-weight: 600;
+  height: 44px; padding: 0 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  outline: none; transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.blade-field.row .set-input { width: 120px; text-align: center; }
+.blade-field .set-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); background: var(--surface); }
+
+/* per-tool student list editor */
+.set-list {
+  width: 100%; min-height: 150px; resize: vertical;
+  font-family: var(--font); font-size: 15px; line-height: 1.55;
+  padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text); outline: none;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.set-list:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); background: var(--surface); }
+.set-list-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.set-list-foot .btn { height: 38px; font-size: 13.5px; padding: 0 14px; }
+.set-count {
+  font-weight: 600; font-size: 12.5px; color: var(--accent-text);
+  background: var(--accent-weak); padding: 4px 10px; border-radius: 999px;
+}
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed; top: 20px; right: 20px; left: auto; z-index: 70;

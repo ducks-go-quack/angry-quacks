@@ -29,6 +29,11 @@ tracking — and it works with no internet connection.
   works exactly the same.
 - **Your roster is saved** on the device (via `localStorage`) and shared across
   every tool. Edit it once from the roster button in the header.
+- **Every tool has its own settings.** Tap the ⚙️ button on any tool to open a
+  settings blade — give the Duck Picker or Spinner Wheel their own custom name
+  list, rename the traffic‑light messages, switch team names to colours or
+  numbers, silence the timer ticks, and more. Every choice is remembered on the
+  device (via `localStorage`), per tool.
 - **Move your roster between devices** with one tap — copy a share link, or
   back it up / restore it as a plain `.txt` file. (All local; no accounts.)
 - **Mobile & touch friendly.** Big tap targets, works in portrait on a phone,
