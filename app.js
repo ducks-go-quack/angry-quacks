@@ -50,6 +50,9 @@
     soundOff: svg('<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>'),
     duck: svg('<path d="M15.5 7.5a3 3 0 1 0-4.9 2.35"/><path d="M10.6 9.85C7.5 10.6 5.5 12.7 5.5 15.2c0 .9.7 1.6 1.6 1.6h5.4a5 5 0 0 0 5-5c0-1.2-.9-2.2-2-2.4"/><path d="M15.5 7.5 19 6l-1.3 3"/>'),
     star: svg('<path d="M12 3l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L12 17.8 6.2 21.3l1.6-6.6L2.6 9.8l6.8-.5z"/>'),
+    // Coin faces — drawn centred in the 24×24 box so they sit dead-centre on the coin.
+    duckHeads: svg('<circle cx="12" cy="12" r="8"/><circle cx="9.2" cy="10.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="14.8" cy="10.6" r="1.15" fill="currentColor" stroke="none"/><ellipse cx="12" cy="15.1" rx="3.4" ry="2" fill="currentColor" stroke="none"/>'),
+    duckTails: svg('<path d="M5.5 17.5c1.9 1.3 4.2 2 6.5 2s4.6-.7 6.5-2"/><path d="M12 19.5c-1-4.5-3.2-7.4-6.5-9 .3 3.4 1.3 6 3 8"/><path d="M12 19.5c1-4.5 3.2-7.4 6.5-9-.3 3.4-1.3 6-3 8"/><path d="M12 19.5V6"/>'),
     gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1l-.3-2.5H9.9l-.3 2.5a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L5.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.3 2.5h4.2l.3-2.5a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5z"/>'),
   };
   const face = (mouth) => svg('<circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.6"/>' + mouth);
@@ -883,18 +886,25 @@
      TOOL 4 — DICE & NUMBERS
      ============================================================ */
   const Dice = (() => {
-    let count = 1, sides = 6;
+    const MAX_DICE = 12; // keep the tray manageable
     const PIP_MAP = {
       1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8],
       5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8],
     };
+
+    // The dice pool is a plain array of side-counts, e.g. [6, 10, 20, 20].
+    function getPool() {
+      const p = Settings.value("dice", "pool", [6]);
+      return Array.isArray(p) ? p.slice() : [6];
+    }
+    function setPool(p) { Settings.set("dice", "pool", p); }
 
     // A classic pip die (only makes sense for a six-sided die).
     function pipDieHtml(val) {
       let cells = "";
       const pips = PIP_MAP[val];
       for (let i = 0; i < 9; i++) cells += pips.includes(i) ? '<span class="pip"></span>' : "<span></span>";
-      return `<div class="die" role="img" aria-label="Rolled a ${val}">${cells}</div>`;
+      return `<div class="die" role="img" aria-label="Rolled a ${val} on a d6">${cells}</div>`;
     }
     // A numeric die for polyhedral sizes (D4/8/10/12/20/50/100).
     function numDieHtml(val, s) {
@@ -902,28 +912,65 @@
       return `<div class="die die-num" role="img" aria-label="Rolled a ${val} on a d${s}">` +
         `<span class="die-val${big}">${val}</span><span class="die-kind">d${s}</span></div>`;
     }
+    function dieHtml(val, s) { return s === 6 ? pipDieHtml(val) : numDieHtml(val, s); }
+
+    // Show the current pool as removable chips, grouped by size (e.g. "2 × D20").
+    function renderPool() {
+      const pool = getPool();
+      const el = $("#dicePool");
+      if (!pool.length) {
+        el.innerHTML = '<span class="dice-empty">No dice yet — add some below.</span>';
+        return;
+      }
+      const counts = {};
+      pool.forEach((s) => { counts[s] = (counts[s] || 0) + 1; });
+      const sizes = Object.keys(counts).map(Number).sort((a, b) => a - b);
+      el.innerHTML = sizes.map((s) =>
+        `<button class="chip dice-chip" data-sides="${s}" aria-label="Remove one D${s} (${counts[s]} in the pool)">` +
+        `${counts[s]} × D${s} <span class="chip-x" aria-hidden="true">✕</span></button>`
+      ).join("");
+    }
 
     function roll() {
+      const pool = getPool();
       const stage = $("#diceStage");
-      const vals = Array.from({ length: count }, () => 1 + rand(sides));
-      stage.innerHTML = vals.map((v) => (sides === 6 ? pipDieHtml(v) : numDieHtml(v, sides))).join("");
-      const total = vals.reduce((a, b) => a + b, 0);
-      $("#diceTotal").textContent = count > 1 ? `Total: ${total}` : "";
+      if (!pool.length) {
+        stage.innerHTML = "";
+        $("#diceTotal").textContent = "";
+        toast("Add some dice first");
+        return;
+      }
+      const results = pool.map((s) => ({ s, v: 1 + rand(s) }));
+      stage.innerHTML = results.map((r) => dieHtml(r.v, r.s)).join("");
+      const total = results.reduce((a, r) => a + r.v, 0);
+      $("#diceTotal").textContent = results.length > 1 ? `Total: ${total}` : "";
       quack(1 + (total % 4) * 0.15);
     }
 
-    function setCount(n) {
-      count = n;
-      Settings.set("dice", "count", n);
-      $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === n));
+    function addDie(s) {
+      const pool = getPool();
+      if (pool.length >= MAX_DICE) { toast("That's plenty of dice!"); return; }
+      pool.push(s);
+      setPool(pool);
+      renderPool();
       roll();
     }
-
-    function setSides(s) {
-      sides = s;
-      Settings.set("dice", "sides", s);
-      $$(".dice-size").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.sides) === s));
-      roll();
+    function removeDie(s) {
+      const pool = getPool();
+      const i = pool.lastIndexOf(s);
+      if (i === -1) return;
+      pool.splice(i, 1);
+      setPool(pool);
+      renderPool();
+      if (pool.length) roll();
+      else { $("#diceStage").innerHTML = ""; $("#diceTotal").textContent = ""; }
+    }
+    function clearPool() {
+      setPool([]);
+      renderPool();
+      $("#diceStage").innerHTML = "";
+      $("#diceTotal").textContent = "";
+      toast("Dice cleared");
     }
 
     function generate() {
@@ -952,7 +999,7 @@
       coin.classList.add("flipping");
       $("#coinOut").textContent = "…";
       setTimeout(() => {
-        face.innerHTML = heads ? ICONS.duck : ICONS.star;
+        face.innerHTML = heads ? ICONS.duckHeads : ICONS.duckTails;
         $("#coinOut").textContent = heads ? "Heads!" : "Tails!";
         quack(heads ? 1 : 1.4);
       }, 950);
@@ -967,24 +1014,28 @@
 
     // Apply the saved defaults to the UI (used at startup and when settings change).
     function syncDefaults() {
-      count = clamp(Settings.value("dice", "count", 1), 1, 4);
-      sides = Settings.value("dice", "sides", 6);
-      $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === count));
-      $$(".dice-size").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.sides) === sides));
+      renderPool();
       $("#numMin").value = Settings.value("dice", "numMin", 1);
       $("#numMax").value = Settings.value("dice", "numMax", 100);
     }
 
     function init() {
+      // Seed a single d6 the first time so the tray isn't empty out of the box.
+      if (Settings.value("dice", "pool", null) === null) setPool([6]);
       $("#rollBtn").addEventListener("click", roll);
+      $("#diceClear").addEventListener("click", clearPool);
       $("#genNumber").addEventListener("click", generate);
       $("#flipCoin").addEventListener("click", flip);
-      $$(".dice-count").forEach((c) => c.addEventListener("click", () => setCount(Number(c.dataset.n))));
-      $$(".dice-size").forEach((c) => c.addEventListener("click", () => setSides(Number(c.dataset.sides))));
+      $$(".dice-add").forEach((c) => c.addEventListener("click", () => addDie(Number(c.dataset.sides))));
+      // pool chips remove one die of their size (event-delegated — chips are rebuilt)
+      $("#dicePool").addEventListener("click", (e) => {
+        const chip = e.target.closest(".dice-chip");
+        if (chip) removeDie(Number(chip.dataset.sides));
+      });
       $$('[data-dmode]').forEach((b) => b.addEventListener("click", () => setMode(b.dataset.dmode)));
-      $("#coinFace").innerHTML = ICONS.duck; // seed coin face
+      $("#coinFace").innerHTML = ICONS.duckHeads; // seed coin face
       syncDefaults();
-      roll(); // seed with the default dice
+      roll(); // seed with the saved pool
     }
     REFRESH.dice = syncDefaults;
     return { init };
@@ -1248,7 +1299,6 @@
     dice: {
       title: "Dice & Numbers settings",
       fields: [
-        { key: "count", type: "stepper", label: "Default number of dice", default: 1, min: 1, max: 4 },
         { key: "numMin", type: "number", label: "Default lowest number", default: 1 },
         { key: "numMax", type: "number", label: "Default highest number", default: 100 },
       ],
