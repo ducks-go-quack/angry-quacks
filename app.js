@@ -601,7 +601,7 @@
     const CIRC = 2 * Math.PI * 54; // matches r=54 in svg
     let total = 300, remaining = 300;
     let running = false, endAt = 0, raf = 0;
-    let lastWholeSecond = -1, ringingTimeout = 0;
+    let lastWholeSecond = -1, ringingTimeout = 0, editing = false;
 
     function fmt(s) {
       s = Math.max(0, Math.ceil(s));
@@ -688,6 +688,41 @@
 
     function reset() { setTotal(total); toast("Timer reset"); }
 
+    // Click the big display to type a time: "mm:ss", or a bare number of minutes.
+    function parseTime(str) {
+      str = String(str).trim();
+      if (!str) return null;
+      if (str.includes(":")) {
+        const parts = str.split(":");
+        const mm = parseInt(parts[0], 10) || 0;
+        const ss = parseInt(parts[1], 10) || 0;
+        return mm * 60 + ss;
+      }
+      const n = parseFloat(str);
+      return isNaN(n) ? null : Math.round(n * 60); // bare number = minutes
+    }
+    function beginEdit() {
+      if (running || editing) return;
+      editing = true;
+      const el = $("#timerDisplay");
+      el.contentEditable = "true";
+      el.classList.add("editing");
+      el.setAttribute("aria-live", "off");
+      el.focus();
+      const range = document.createRange(); range.selectNodeContents(el);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    }
+    function commitEdit(cancel) {
+      if (!editing) return;
+      editing = false;
+      const el = $("#timerDisplay");
+      el.contentEditable = "false";
+      el.classList.remove("editing");
+      const sec = cancel ? null : parseTime(el.textContent);
+      if (sec != null) { setTotal(clamp(sec, 0, 5999)); toast("Time set"); }
+      else draw(); // revert to the current value
+    }
+
     function init() {
       total = remaining = store.get("timerTotal", 300);
       draw(); highlightPreset();
@@ -698,9 +733,17 @@
       $("#tMinus").addEventListener("click", () => adjust(-60));
       $$(".presets .chip[data-sec]").forEach((c) =>
         c.addEventListener("click", () => setTotal(Number(c.dataset.sec))));
+      const disp = $("#timerDisplay");
+      disp.addEventListener("click", beginEdit);
+      disp.addEventListener("blur", () => commitEdit(false));
+      disp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); disp.blur(); }
+        else if (e.key === "Escape") { e.preventDefault(); commitEdit(true); disp.blur(); }
+      });
     }
     // stop counting/ringing when navigating away
     LEAVE.timer = () => {
+      commitEdit(true);
       cancelAnimationFrame(raf); running = false;
       $(".timer-stage").classList.remove("ringing");
       $("#timerToggle").innerHTML = ICONS.play + (remaining < total && remaining > 0 ? "Resume" : "Start");
@@ -831,23 +874,30 @@
      TOOL 4 — DICE & NUMBERS
      ============================================================ */
   const Dice = (() => {
-    let count = 1;
+    let count = 1, sides = 6;
     const PIP_MAP = {
       1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8],
       5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8],
     };
 
-    function dieHtml(val) {
+    // A classic pip die (only makes sense for a six-sided die).
+    function pipDieHtml(val) {
       let cells = "";
       const pips = PIP_MAP[val];
       for (let i = 0; i < 9; i++) cells += pips.includes(i) ? '<span class="pip"></span>' : "<span></span>";
       return `<div class="die" role="img" aria-label="Rolled a ${val}">${cells}</div>`;
     }
+    // A numeric die for polyhedral sizes (D4/8/10/12/20/50/100).
+    function numDieHtml(val, s) {
+      const big = val >= 100 ? " three" : val >= 10 ? " two" : "";
+      return `<div class="die die-num" role="img" aria-label="Rolled a ${val} on a d${s}">` +
+        `<span class="die-val${big}">${val}</span><span class="die-kind">d${s}</span></div>`;
+    }
 
     function roll() {
       const stage = $("#diceStage");
-      const vals = Array.from({ length: count }, () => 1 + rand(6));
-      stage.innerHTML = vals.map(dieHtml).join("");
+      const vals = Array.from({ length: count }, () => 1 + rand(sides));
+      stage.innerHTML = vals.map((v) => (sides === 6 ? pipDieHtml(v) : numDieHtml(v, sides))).join("");
       const total = vals.reduce((a, b) => a + b, 0);
       $("#diceTotal").textContent = count > 1 ? `Total: ${total}` : "";
       quack(1 + (total % 4) * 0.15);
@@ -855,7 +905,15 @@
 
     function setCount(n) {
       count = n;
+      Settings.set("dice", "count", n);
       $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === n));
+      roll();
+    }
+
+    function setSides(s) {
+      sides = s;
+      Settings.set("dice", "sides", s);
+      $$(".dice-size").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.sides) === s));
       roll();
     }
 
@@ -901,7 +959,9 @@
     // Apply the saved defaults to the UI (used at startup and when settings change).
     function syncDefaults() {
       count = clamp(Settings.value("dice", "count", 1), 1, 4);
+      sides = Settings.value("dice", "sides", 6);
       $$(".dice-count").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.n) === count));
+      $$(".dice-size").forEach((c) => c.classList.toggle("is-on", Number(c.dataset.sides) === sides));
       $("#numMin").value = Settings.value("dice", "numMin", 1);
       $("#numMax").value = Settings.value("dice", "numMax", 100);
     }
@@ -911,10 +971,11 @@
       $("#genNumber").addEventListener("click", generate);
       $("#flipCoin").addEventListener("click", flip);
       $$(".dice-count").forEach((c) => c.addEventListener("click", () => setCount(Number(c.dataset.n))));
+      $$(".dice-size").forEach((c) => c.addEventListener("click", () => setSides(Number(c.dataset.sides))));
       $$('[data-dmode]').forEach((b) => b.addEventListener("click", () => setMode(b.dataset.dmode)));
       $("#coinFace").innerHTML = ICONS.duck; // seed coin face
       syncDefaults();
-      roll(); // seed with the default number of dice
+      roll(); // seed with the default dice
     }
     REFRESH.dice = syncDefaults;
     return { init };
@@ -936,6 +997,10 @@
         return false;
       }
       ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // The context is created after an await, so the user-gesture may have
+      // lapsed and it can start "suspended" — without resuming it the analyser
+      // only ever sees silence. This is what makes the meter look dead.
+      if (ctx.state === "suspended") { try { await ctx.resume(); } catch (e) {} }
       const src = ctx.createMediaStreamSource(stream);
       analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
@@ -953,7 +1018,7 @@
       let sum = 0;
       for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; sum += v * v; }
       const rms = Math.sqrt(sum / data.length);
-      const level = clamp(Math.round(rms * 320), 0, 100);
+      const level = clamp(Math.round(rms * 400), 0, 100);
       render(level);
       raf = requestAnimationFrame(loop);
     }

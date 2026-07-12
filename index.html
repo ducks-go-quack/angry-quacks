@@ -189,7 +189,7 @@
           <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="54" />
         </svg>
         <div class="timer-face">
-          <div class="timer-display" id="timerDisplay" role="timer" aria-live="off">05:00</div>
+          <div class="timer-display" id="timerDisplay" role="timer" aria-live="off" title="Click to type a time (mm:ss or minutes)">05:00</div>
           <div class="timer-sub" id="timerSub">Ready</div>
         </div>
       </div>
@@ -266,7 +266,17 @@
 
       <div id="diceMode">
         <div class="stage dice-stage" id="diceStage"></div>
-        <div class="presets">
+        <div class="presets dice-sizes" role="group" aria-label="Die type">
+          <button class="chip dice-size" data-sides="4">D4</button>
+          <button class="chip dice-size is-on" data-sides="6">D6</button>
+          <button class="chip dice-size" data-sides="8">D8</button>
+          <button class="chip dice-size" data-sides="10">D10</button>
+          <button class="chip dice-size" data-sides="12">D12</button>
+          <button class="chip dice-size" data-sides="20">D20</button>
+          <button class="chip dice-size" data-sides="50">D50</button>
+          <button class="chip dice-size" data-sides="100">D100</button>
+        </div>
+        <div class="presets" role="group" aria-label="How many dice">
           <button class="chip dice-count is-on" data-n="1">1 die</button>
           <button class="chip dice-count" data-n="2">2 dice</button>
           <button class="chip dice-count" data-n="3">3 dice</button>
