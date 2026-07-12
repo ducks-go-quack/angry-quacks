@@ -19,6 +19,40 @@
     set(key, val) { try { localStorage.setItem("qp_" + key, JSON.stringify(val)); } catch (e) {} },
   };
 
+  /* -------------------- inline SVG icons (design system) -------------------- */
+  const svg = (inner, sw = 1.8) =>
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+  const ICONS = {
+    play: svg('<path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/>'),
+    pause: svg('<rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/>'),
+    mic: svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+    stop: svg('<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor" stroke="none"/>'),
+    sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>'),
+    moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>'),
+    soundOn: svg('<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/>'),
+    soundOff: svg('<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>'),
+    duck: svg('<path d="M15.5 7.5a3 3 0 1 0-4.9 2.35"/><path d="M10.6 9.85C7.5 10.6 5.5 12.7 5.5 15.2c0 .9.7 1.6 1.6 1.6h5.4a5 5 0 0 0 5-5c0-1.2-.9-2.2-2-2.4"/><path d="M15.5 7.5 19 6l-1.3 3"/>'),
+    star: svg('<path d="M12 3l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L12 17.8 6.2 21.3l1.6-6.6L2.6 9.8l6.8-.5z"/>'),
+  };
+  const face = (mouth) => svg('<circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01" stroke-width="2.6"/>' + mouth);
+  const FACES = {
+    calm: face('<path d="M8.5 14a4 4 0 0 0 7 0"/>'),
+    ok: face('<path d="M9 14.5c1 .7 5 .7 6 0"/>'),
+    mid: face('<path d="M9 14.5h6"/>'),
+    loud: face('<path d="M8.5 15.5a4 4 0 0 1 7 0"/>'),
+    idle: svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 10.5 10 10M14 10 15.5 10.5"/><path d="M9 14.5h6"/>'),
+  };
+
+  // Resolve a CSS custom property to a concrete color (for canvas drawing).
+  function cssColor(varName) {
+    const probe = document.createElement("span");
+    probe.style.cssText = "position:absolute;visibility:hidden;color:var(" + varName + ")";
+    document.body.appendChild(probe);
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c || "#888";
+  }
+
   /* -------------------- roster state -------------------- */
   const DEFAULT_NAMES = [
     "Ada", "Alan", "Grace", "Katherine", "Mae", "Carl", "Rosalind", "Isaac",
@@ -93,15 +127,16 @@
     toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
   }
 
-  // Celebratory falling emoji — shared by the picker and the wheel.
+  // Celebratory falling confetti — shared by the picker and the wheel.
+  const CONFETTI_COLORS = ["#0d9488", "#0ea5e9", "#7c3aed", "#22c55e", "#f59e0b", "#ef4444"];
   function rainDucks() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const emojis = ["🦆", "⭐", "🎉", "💛"];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 16; i++) {
       const d = document.createElement("div");
-      d.className = "confetti-duck";
-      d.textContent = emojis[rand(emojis.length)];
+      d.className = "confetti";
+      d.style.background = CONFETTI_COLORS[rand(CONFETTI_COLORS.length)];
       d.style.left = rand(100) + "vw";
+      d.style.borderRadius = Math.random() < 0.5 ? "2px" : "50%";
       d.style.animationDuration = 1.6 + Math.random() * 1.4 + "s";
       d.style.animationDelay = Math.random() * 0.3 + "s";
       document.body.appendChild(d);
@@ -141,7 +176,7 @@
     }
 
     function pick() {
-      if (!roster.length) { toast("Add students to your roster first 🦆"); openRoster(); return; }
+      if (!roster.length) { toast("Add students to your roster first"); openRoster(); return; }
       let pool = available();
       if (!pool.length) {
         toast("Everyone's had a turn! Starting a new round.");
@@ -197,7 +232,7 @@
       nameEl().textContent = "Tap “Pick” to choose";
       nameEl().classList.remove("win");
       updateHint();
-      toast("Picks reset 🔄");
+      toast("Picks reset");
     }
 
     function init() {
@@ -214,8 +249,9 @@
      TOOL 1b — SPINNER WHEEL
      ============================================================ */
   const Wheel = (() => {
-    const PAL = ["#ffd23f", "#ff9f1c", "#ffbf69", "#8ae6dd", "#2ec4b6",
-                 "#b8a6e6", "#ff7b8c", "#8ab6ff", "#06d6a0", "#f4a900"];
+    const PAL = ["#5eead4", "#7dd3fc", "#c4b5fd", "#86efac", "#fde68a",
+                 "#fca5a5", "#99f6e4", "#a5b4fc", "#67e8f9", "#d8b4fe"];
+    const LABEL_COLOR = "#1f2430"; // fixed dark text reads on all pastel segments
     let names = [];
     let rotation = -Math.PI / 2; // start with segment 0 under the pointer
     let spinning = false;
@@ -233,9 +269,10 @@
       const n = names.length;
       if (!n) {
         ctx.beginPath(); ctx.arc(R, R, r, 0, TAU);
-        ctx.fillStyle = "#e9dcc0"; ctx.fill();
-        ctx.fillStyle = "#8a7a5f"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.font = "600 26px system-ui, sans-serif";
+        ctx.fillStyle = cssColor("--surface-2"); ctx.fill();
+        ctx.strokeStyle = cssColor("--border"); ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = cssColor("--text-3"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = '600 26px "Plus Jakarta Sans", system-ui, sans-serif';
         ctx.fillText("Add students", R, R - 16);
         ctx.fillText("to the roster", R, R + 16);
         return;
@@ -255,9 +292,9 @@
         ctx.translate(R, R);
         ctx.rotate(a0 + seg / 2);
         ctx.textAlign = "right"; ctx.textBaseline = "middle";
-        ctx.fillStyle = "#2b2118";
+        ctx.fillStyle = LABEL_COLOR;
         const fs = clamp(Math.round(seg * 90), 12, 26);
-        ctx.font = `800 ${fs}px "Baloo 2", system-ui, sans-serif`;
+        ctx.font = `700 ${fs}px "Plus Jakarta Sans", system-ui, sans-serif`;
         let label = names[i];
         if (label.length > 13) label = label.slice(0, 12) + "…";
         ctx.fillText(label, r - 14, 0);
@@ -278,7 +315,7 @@
 
     function spin() {
       if (spinning) return;
-      if (!names.length) { toast("Add students to your roster first 🦆"); openRoster(); return; }
+      if (!names.length) { toast("Add students to your roster first"); openRoster(); return; }
       spinning = true;
       $("#wheelSpin").disabled = true;
       $("#wheelResult").classList.remove("win");
@@ -312,7 +349,7 @@
       $("#wheelSpin").disabled = false;
       const name = names[winner];
       const res = $("#wheelResult");
-      res.textContent = "🎉 " + name + "!";
+      res.textContent = name;
       void res.offsetWidth; res.classList.add("win");
       fanfare(); rainDucks();
       if ($("#wheelRemove").checked && names.length > 1) {
@@ -332,7 +369,9 @@
 
     function init() {
       $("#wheelSpin").addEventListener("click", spin);
-      $("#wheelReset").addEventListener("click", () => { if (!spinning) { rebuild(); toast("Wheel reset 🔄"); } });
+      $("#wheelReset").addEventListener("click", () => { if (!spinning) { rebuild(); toast("Wheel reset"); } });
+      // redraw once the web font loads so segment labels use Plus Jakarta Sans
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (current === "wheel") draw(); });
     }
     ENTER.wheel = () => { if (!spinning) rebuild(); };
     return { init };
@@ -357,7 +396,7 @@
     }
 
     function make() {
-      if (roster.length < 2) { toast("Add at least 2 students 🦆"); openRoster(); return; }
+      if (roster.length < 2) { toast("Add at least 2 students"); openRoster(); return; }
       const people = shuffle(roster);
       let groups = [];
       if (mode === "teams") {
@@ -368,7 +407,7 @@
         const size = clamp(num, 1, people.length);
         for (let i = 0; i < people.length; i += size) groups.push(people.slice(i, i + size));
       }
-      const palette = ["#ff9f1c", "#2ec4b6", "#e71d36", "#8367c7", "#3a86ff", "#f4a900", "#06d6a0", "#ef476f"];
+      const palette = ["#0d9488", "#0ea5e9", "#7c3aed", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#6366f1"];
       const names = ["Mallards", "Teals", "Wigeons", "Pintails", "Goldeneyes", "Mergansers", "Shovelers", "Gadwalls",
                      "Eiders", "Scaups", "Buffleheads", "Canvasbacks"];
       const out = $("#teamsOut");
@@ -384,7 +423,7 @@
         out.appendChild(card);
       });
       quack();
-      toast(`Made ${groups.length} teams 🪺`);
+      toast(`Made ${groups.length} teams`);
     }
 
     function init() {
@@ -445,7 +484,7 @@
       remaining = 0;
       draw();
       cancelAnimationFrame(raf);
-      $("#timerToggle").textContent = "▶ Start";
+      $("#timerToggle").innerHTML = ICONS.play + "Start";
       $("#timerSub").textContent = "Time's up!";
       $(".timer-stage").classList.add("ringing");
       fanfare();
@@ -460,7 +499,7 @@
       running = true;
       lastWholeSecond = -1;
       $(".timer-stage").classList.remove("ringing");
-      $("#timerToggle").textContent = "⏸ Pause";
+      $("#timerToggle").innerHTML = ICONS.pause + "Pause";
       $("#timerSub").textContent = "Counting down…";
       ensureAudio();
       raf = requestAnimationFrame(loop);
@@ -468,7 +507,7 @@
     function pause() {
       running = false;
       cancelAnimationFrame(raf);
-      $("#timerToggle").textContent = "▶ Resume";
+      $("#timerToggle").innerHTML = ICONS.play + "Resume";
       $("#timerSub").textContent = "Paused";
     }
     function toggle() { running ? pause() : start(); }
@@ -479,7 +518,7 @@
       running = false;
       cancelAnimationFrame(raf);
       $(".timer-stage").classList.remove("ringing");
-      $("#timerToggle").textContent = "▶ Start";
+      $("#timerToggle").innerHTML = ICONS.play + "Start";
       $("#timerSub").textContent = "Ready";
       draw();
       highlightPreset();
@@ -499,6 +538,7 @@
     function init() {
       total = remaining = store.get("timerTotal", 300);
       draw(); highlightPreset();
+      $("#timerToggle").innerHTML = ICONS.play + "Start";
       $("#timerToggle").addEventListener("click", toggle);
       $("#timerReset").addEventListener("click", reset);
       $("#tPlus").addEventListener("click", () => adjust(60));
@@ -510,7 +550,7 @@
     LEAVE.timer = () => {
       cancelAnimationFrame(raf); running = false;
       $(".timer-stage").classList.remove("ringing");
-      $("#timerToggle").textContent = remaining < total && remaining > 0 ? "▶ Resume" : "▶ Start";
+      $("#timerToggle").innerHTML = ICONS.play + (remaining < total && remaining > 0 ? "Resume" : "Start");
     };
     return { init };
   })();
@@ -544,7 +584,7 @@
     function start() {
       running = true;
       startAt = performance.now();
-      $("#swToggle").textContent = "⏸ Stop";
+      $("#swToggle").innerHTML = ICONS.pause + "Stop";
       $("#swSub").textContent = "Running…";
       ensureAudio();
       raf = requestAnimationFrame(draw);
@@ -553,7 +593,7 @@
       running = false;
       elapsed += performance.now() - startAt;
       cancelAnimationFrame(raf);
-      $("#swToggle").textContent = "▶ Resume";
+      $("#swToggle").innerHTML = ICONS.play + "Resume";
       $("#swSub").textContent = "Stopped";
       draw();
     }
@@ -563,7 +603,7 @@
       running = false; cancelAnimationFrame(raf);
       elapsed = 0; laps = []; lapCount = 0;
       $("#swLaps").innerHTML = "";
-      $("#swToggle").textContent = "▶ Start";
+      $("#swToggle").innerHTML = ICONS.play + "Start";
       $("#swSub").textContent = "Ready";
       draw();
     }
@@ -585,6 +625,7 @@
     }
 
     function init() {
+      $("#swToggle").innerHTML = ICONS.play + "Start";
       $("#swToggle").addEventListener("click", toggle);
       $("#swReset").addEventListener("click", reset);
       $("#swLap").addEventListener("click", lap);
@@ -599,17 +640,17 @@
      ============================================================ */
   const Traffic = (() => {
     const LABELS = {
-      red: "🔴 Silent, please",
-      amber: "🟡 Whisper voices",
-      green: "🟢 Talk &amp; work",
+      red: "Silent, please",
+      amber: "Whisper voices",
+      green: "Talk & work",
     };
-    const COLORS = { red: "#e71d36", amber: "#f4a900", green: "#38b000" };
+    const COLORS = { red: "var(--danger)", amber: "var(--warning)", green: "var(--success)" };
 
     function set(state, opts) {
       $$(".lamp").forEach((l) => l.classList.toggle("on", l.dataset.state === state));
       const label = $("#trafficLabel");
       if (state && LABELS[state]) {
-        label.innerHTML = LABELS[state];
+        label.textContent = LABELS[state];
         label.style.color = COLORS[state];
       } else {
         label.textContent = "Tap a light";
@@ -684,8 +725,8 @@
       coin.classList.add("flipping");
       $("#coinOut").textContent = "…";
       setTimeout(() => {
-        face.textContent = heads ? "🦆" : "⭐";
-        $("#coinOut").textContent = heads ? "Heads! 🦆" : "Tails! ⭐";
+        face.innerHTML = heads ? ICONS.duck : ICONS.star;
+        $("#coinOut").textContent = heads ? "Heads!" : "Tails!";
         quack(heads ? 1 : 1.4);
       }, 950);
     }
@@ -703,6 +744,7 @@
       $("#flipCoin").addEventListener("click", flip);
       $$(".dice-count").forEach((c) => c.addEventListener("click", () => setCount(Number(c.dataset.n))));
       $$('[data-dmode]').forEach((b) => b.addEventListener("click", () => setMode(b.dataset.dmode)));
+      $("#coinFace").innerHTML = ICONS.duck; // seed coin face
       roll(); // seed one die
     }
     return { init };
@@ -720,7 +762,7 @@
         stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
       } catch (e) {
         $("#noiseLabel").textContent = "Microphone blocked — check browser permissions.";
-        toast("Couldn't access the mic 🎙️");
+        toast("Couldn't access the mic");
         return false;
       }
       ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -754,12 +796,13 @@
       const stage = $(".noise-stage");
       const scale = 1 + (level / 100) * 0.25;
       duck.style.transform = `scale(${scale.toFixed(3)})`;
-      let face, label;
-      if (level < thresh * 0.5) { face = "😌"; label = "Lovely and calm"; }
-      else if (level < thresh * 0.8) { face = "🙂"; label = "Nice working buzz"; }
-      else if (level < thresh) { face = "😐"; label = "Getting louder…"; }
-      else { face = "😫"; label = "Too loud!"; }
-      duck.textContent = face;
+      let face, label, color;
+      if (level < thresh * 0.5) { face = FACES.calm; label = "Lovely and calm"; color = "var(--success)"; }
+      else if (level < thresh * 0.8) { face = FACES.ok; label = "Nice working buzz"; color = "var(--success)"; }
+      else if (level < thresh) { face = FACES.mid; label = "Getting louder…"; color = "var(--warning)"; }
+      else { face = FACES.loud; label = "Too loud!"; color = "var(--danger)"; }
+      duck.innerHTML = face;
+      duck.style.color = color;
       $("#noiseLabel").textContent = label;
       const loud = level >= thresh;
       stage.classList.toggle("loud", loud);
@@ -776,21 +819,25 @@
       if (ctx) ctx.close();
       ctx = stream = analyser = null;
       $("#noiseBar").style.width = "0%";
-      $("#noiseDuck").textContent = "😴";
+      $("#noiseDuck").innerHTML = FACES.idle;
+      $("#noiseDuck").style.color = "";
       $("#noiseDuck").style.transform = "scale(1)";
       $(".noise-stage").classList.remove("loud");
       $("#noiseLabel").textContent = "Tap start to listen";
-      $("#noiseToggle").textContent = "🎙️ Start listening";
+      $("#noiseToggle").innerHTML = ICONS.mic + "Start listening";
     }
 
     async function toggle() {
       if (running) { stop(); return; }
       $("#noiseToggle").textContent = "…starting";
       const ok = await startMic();
-      $("#noiseToggle").textContent = ok ? "⏹ Stop" : "🎙️ Start listening";
+      $("#noiseToggle").innerHTML = ok ? ICONS.stop + "Stop" : ICONS.mic + "Start listening";
     }
 
-    function init() { $("#noiseToggle").addEventListener("click", toggle); }
+    function init() {
+      $("#noiseDuck").innerHTML = FACES.idle;
+      $("#noiseToggle").addEventListener("click", toggle);
+    }
     LEAVE.noise = () => { if (running) stop(); };
     return { init };
   })();
@@ -828,7 +875,7 @@
     store.set("roster", roster);
     updateRosterCounts();
     closeRoster();
-    toast(roster.length ? `Saved ${roster.length} students ✅` : "Roster cleared");
+    toast(roster.length ? `Saved ${roster.length} students` : "Roster cleared");
   }
 
   /* ---- roster: share / backup / restore ---- */
@@ -852,7 +899,7 @@
     const link = shareLink();
     try {
       await navigator.clipboard.writeText(link);
-      toast("Share link copied 🔗");
+      toast("Share link copied");
     } catch (e) {
       // fallback: drop it into the textarea selection for manual copy
       const ta = $("#rosterText");
@@ -869,7 +916,7 @@
     a.href = url; a.download = "class-roster.txt";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast("Roster saved as a file ⬇️");
+    toast("Roster saved as a file");
   }
   function importFromFile(file) {
     const reader = new FileReader();
@@ -901,12 +948,12 @@
      ============================================================ */
   function applyTheme(mode) {
     document.documentElement.setAttribute("data-theme", mode);
-    $("#themeIcon").textContent = mode === "dark" ? "☀️" : "🌙";
-    document.querySelector('meta[name="theme-color"]').setAttribute("content", mode === "dark" ? "#1a1712" : "#ffd23f");
+    $("#themeIcon").innerHTML = mode === "dark" ? ICONS.sun : ICONS.moon;
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", mode === "dark" ? "#1c1f26" : "#0d9488");
     store.set("theme", mode);
   }
   function applySound() {
-    $("#soundIcon").textContent = soundOn ? "🔊" : "🔇";
+    $("#soundIcon").innerHTML = soundOn ? ICONS.soundOn : ICONS.soundOff;
     $("#soundBtn").setAttribute("aria-pressed", String(soundOn));
   }
 
@@ -920,11 +967,12 @@
     Picker.init(); Wheel.init(); Teams.init(); Timer.init(); Stopwatch.init(); Traffic.init(); Dice.init(); Noise.init();
 
     // navigation
-    $$(".tool-card[data-tool]").forEach((c) => c.addEventListener("click", () => go(c.dataset.tool)));
+    $$("[data-tool]").forEach((c) => c.addEventListener("click", () => go(c.dataset.tool)));
     $$("[data-back]").forEach((b) => b.addEventListener("click", () => go("home")));
     $("#homeBtn").addEventListener("click", () => go("home"));
     $("#rosterCard").addEventListener("click", openRoster);
     $("#rosterBtn").addEventListener("click", openRoster);
+    if ($("#rosterBtn2")) $("#rosterBtn2").addEventListener("click", openRoster);
 
     // roster modal
     $("#closeRoster").addEventListener("click", closeRoster);

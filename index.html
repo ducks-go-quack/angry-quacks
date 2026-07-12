@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffd23f" />
+  <meta name="theme-color" content="#0d9488" />
   <meta name="description" content="Quack Pack — a free, fun, offline classroom toolkit for K-12 teachers. Random student picker, spinner wheel, team maker, timer, stopwatch, traffic light, dice roller and noise meter." />
-  <meta property="og:title" content="Quack Pack 🦆 — Classroom Toolkit" />
+  <meta property="og:title" content="Quack Pack — Classroom Toolkit" />
   <meta property="og:description" content="A free, fun, offline toolkit for K-12 teachers: student picker, spinner wheel, team maker, timer, stopwatch, traffic light, dice & noise meter. No logins, no ads." />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary" />
-  <title>Quack Pack 🦆 — Classroom Toolkit</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%86%3C/text%3E%3C/svg%3E" />
+  <title>Quack Pack — Classroom Toolkit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.5 7.5a3 3 0 1 0-4.9 2.35'/%3E%3Cpath d='M10.6 9.85C7.5 10.6 5.5 12.7 5.5 15.2c0 .9.7 1.6 1.6 1.6h5.4a5 5 0 0 0 5-5c0-1.2-.9-2.2-2-2.4'/%3E%3Cpath d='M15.5 7.5 19 6l-1.3 3'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -18,18 +21,23 @@
 
   <header class="app-header">
     <button class="brand" id="homeBtn" aria-label="Go to Quack Pack home">
-      <span class="brand-duck" aria-hidden="true">🦆</span>
-      <span class="brand-text">Quack&nbsp;Pack</span>
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 7.5a3 3 0 1 0-4.9 2.35"/><path d="M10.6 9.85C7.5 10.6 5.5 12.7 5.5 15.2c0 .9.7 1.6 1.6 1.6h5.4a5 5 0 0 0 5-5c0-1.2-.9-2.2-2-2.4"/><path d="M15.5 7.5 19 6l-1.3 3"/></svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">Quack Pack</span>
+        <span class="brand-sub">Classroom Toolkit</span>
+      </span>
     </button>
     <div class="header-actions">
       <button class="icon-btn" id="rosterBtn" aria-label="Edit class roster" title="Class roster">
-        <span aria-hidden="true">👥</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </button>
       <button class="icon-btn" id="soundBtn" aria-label="Toggle sound" title="Toggle sound" aria-pressed="true">
-        <span aria-hidden="true" id="soundIcon">🔊</span>
+        <span aria-hidden="true" id="soundIcon"></span>
       </button>
       <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">
-        <span aria-hidden="true" id="themeIcon">🌙</span>
+        <span aria-hidden="true" id="themeIcon"></span>
       </button>
     </div>
   </header>
@@ -39,53 +47,64 @@
     <!-- ===================== HOME / TOOL GRID ===================== -->
     <section id="view-home" class="view is-active" aria-label="Choose a tool">
       <div class="hero">
-        <h1 class="hero-title">Your classroom, <span class="wobble">un‑ruffled.</span></h1>
-        <p class="hero-sub">Five ducktastic tools that just work. No logins, no ads, works offline.</p>
+        <div class="hero-badge">Classroom Toolkit</div>
+        <h1 class="hero-title">Your classroom, un&#8209;ruffled.</h1>
+        <p class="hero-sub">Eight ducktastic tools that just work — random picker, spinner, teams, timers and more. No logins, no ads, works offline.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-tool="picker">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+            Pick a student
+          </button>
+          <button class="btn btn-ghost" id="rosterBtn2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Edit roster
+          </button>
+        </div>
       </div>
 
       <nav class="tool-grid" aria-label="Tools">
-        <button class="tool-card" data-tool="picker" style="--c:#ff9f1c;--c2:#ffbf69">
-          <span class="tool-emoji" aria-hidden="true">🎯</span>
+        <button class="tool-card" data-tool="picker">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>
           <span class="tool-name">Duck Picker</span>
           <span class="tool-desc">Pick a random student — fairly.</span>
         </button>
-        <button class="tool-card" data-tool="wheel" style="--c:#06d6a0;--c2:#8ae6b0">
-          <span class="tool-emoji" aria-hidden="true">🎡</span>
+        <button class="tool-card" data-tool="wheel">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg></span>
           <span class="tool-name">Spinner Wheel</span>
           <span class="tool-desc">Give the wheel a big spin.</span>
         </button>
-        <button class="tool-card" data-tool="teams" style="--c:#2ec4b6;--c2:#8ae6dd">
-          <span class="tool-emoji" aria-hidden="true">🪺</span>
+        <button class="tool-card" data-tool="teams">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 19c0-2.8 2.2-5 5-5s5 2.2 5 5M12 19c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg></span>
           <span class="tool-name">Team Maker</span>
           <span class="tool-desc">Split the flock into groups.</span>
         </button>
-        <button class="tool-card" data-tool="timer" style="--c:#e71d36;--c2:#ff7b8c">
-          <span class="tool-emoji" aria-hidden="true">⏱️</span>
+        <button class="tool-card" data-tool="timer">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6M12 2v3"/></svg></span>
           <span class="tool-name">Timer</span>
           <span class="tool-desc">Countdown with a quacky finish.</span>
         </button>
-        <button class="tool-card" data-tool="stopwatch" style="--c:#ef476f;--c2:#ff9db3">
-          <span class="tool-emoji" aria-hidden="true">⏲️</span>
+        <button class="tool-card" data-tool="stopwatch">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.5-3.5M9 2h6M19.5 5.5 21 7"/></svg></span>
           <span class="tool-name">Stopwatch</span>
           <span class="tool-desc">Count up, with laps.</span>
         </button>
-        <button class="tool-card" data-tool="traffic" style="--c:#38b000;--c2:#8fd694">
-          <span class="tool-emoji" aria-hidden="true">🚦</span>
+        <button class="tool-card" data-tool="traffic">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="20" rx="4"/><path d="M12 7h.01M12 12h.01M12 17h.01"/></svg></span>
           <span class="tool-name">Traffic Light</span>
           <span class="tool-desc">Signal the room's noise level.</span>
         </button>
-        <button class="tool-card" data-tool="dice" style="--c:#8367c7;--c2:#b8a6e6">
-          <span class="tool-emoji" aria-hidden="true">🎲</span>
+        <button class="tool-card" data-tool="dice">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg></span>
           <span class="tool-name">Dice &amp; Numbers</span>
           <span class="tool-desc">Roll dice or a random number.</span>
         </button>
-        <button class="tool-card" data-tool="noise" style="--c:#3a86ff;--c2:#8ab6ff">
-          <span class="tool-emoji" aria-hidden="true">📢</span>
+        <button class="tool-card" data-tool="noise">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 15-6v14L3 13z"/><path d="M18 8a3 3 0 0 1 0 8"/><path d="M6 13v4a2 2 0 0 0 4 0v-2.5"/></svg></span>
           <span class="tool-name">Noise Meter</span>
           <span class="tool-desc">Keep the volume in check.</span>
         </button>
-        <button class="tool-card ghost" id="rosterCard" style="--c:#6c757d;--c2:#adb5bd">
-          <span class="tool-emoji" aria-hidden="true">👥</span>
+        <button class="tool-card ghost" id="rosterCard">
+          <span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
           <span class="tool-name">Class Roster</span>
           <span class="tool-desc" id="rosterCount">Add your students →</span>
         </button>
@@ -95,20 +114,20 @@
     <!-- ===================== DUCK PICKER ===================== -->
     <section id="view-picker" class="view" aria-label="Duck Picker" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>🎯 Duck Picker</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Duck Picker</h2>
       </div>
       <div class="stage picker-stage">
         <div class="pond" id="pond" aria-hidden="true"></div>
         <div class="picked-name" id="pickedName" role="status" aria-live="polite">Tap “Pick” to choose</div>
       </div>
       <div class="controls">
-        <button class="btn btn-primary big" id="pickBtn">🎯 Pick a duck</button>
+        <button class="btn btn-primary big" id="pickBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>Pick a duck</button>
         <label class="switch">
           <input type="checkbox" id="noRepeat" checked />
           <span>No repeats until everyone’s picked</span>
         </label>
-        <button class="btn btn-ghost" id="resetPicker">Reset picks</button>
+        <button class="btn btn-ghost" id="resetPicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg>Reset picks</button>
         <p class="hint" id="pickerHint"></p>
       </div>
     </section>
@@ -116,8 +135,8 @@
     <!-- ===================== SPINNER WHEEL ===================== -->
     <section id="view-wheel" class="view" aria-label="Spinner Wheel" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>🎡 Spinner Wheel</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Spinner Wheel</h2>
       </div>
       <div class="stage wheel-stage">
         <div class="wheel-wrap">
@@ -132,15 +151,15 @@
           <input type="checkbox" id="wheelRemove" />
           <span>Remove each name after it’s picked</span>
         </label>
-        <button class="btn btn-ghost" id="wheelReset">Reset wheel</button>
+        <button class="btn btn-ghost" id="wheelReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg>Reset wheel</button>
       </div>
     </section>
 
     <!-- ===================== TEAM MAKER ===================== -->
     <section id="view-teams" class="view" aria-label="Team Maker" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>🪺 Team Maker</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Team Maker</h2>
       </div>
       <div class="controls team-controls">
         <div class="seg" role="group" aria-label="Split method">
@@ -148,11 +167,11 @@
           <button class="seg-btn" id="bySize" data-mode="size">By team size</button>
         </div>
         <div class="stepper">
-          <button class="btn btn-ghost step" id="teamMinus" aria-label="Decrease">−</button>
+          <button class="btn btn-ghost step" id="teamMinus" aria-label="Decrease"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button>
           <div class="stepper-val"><span id="teamNum">4</span><small id="teamLabel">teams</small></div>
-          <button class="btn btn-ghost step" id="teamPlus" aria-label="Increase">+</button>
+          <button class="btn btn-ghost step" id="teamPlus" aria-label="Increase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
         </div>
-        <button class="btn btn-primary big" id="makeTeams">🪺 Make teams</button>
+        <button class="btn btn-primary big" id="makeTeams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 19c0-2.8 2.2-5 5-5s5 2.2 5 5M12 19c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>Make teams</button>
       </div>
       <div class="teams-out" id="teamsOut" aria-live="polite"></div>
     </section>
@@ -160,8 +179,8 @@
     <!-- ===================== TIMER ===================== -->
     <section id="view-timer" class="view" aria-label="Timer" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>⏱️ Timer</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Timer</h2>
       </div>
       <div class="stage timer-stage">
         <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
@@ -183,17 +202,17 @@
       </div>
       <div class="controls timer-controls">
         <button class="btn btn-ghost step" id="tMinus" aria-label="Subtract a minute">−1m</button>
-        <button class="btn btn-primary big" id="timerToggle">▶ Start</button>
+        <button class="btn btn-primary big" id="timerToggle">Start</button>
         <button class="btn btn-ghost step" id="tPlus" aria-label="Add a minute">+1m</button>
-        <button class="btn btn-ghost" id="timerReset">Reset</button>
+        <button class="btn btn-ghost" id="timerReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg>Reset</button>
       </div>
     </section>
 
     <!-- ===================== STOPWATCH ===================== -->
     <section id="view-stopwatch" class="view" aria-label="Stopwatch" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>⏲️ Stopwatch</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Stopwatch</h2>
       </div>
       <div class="stage timer-stage">
         <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
@@ -207,8 +226,8 @@
       </div>
       <div class="controls timer-controls">
         <button class="btn btn-ghost step" id="swLap">Lap</button>
-        <button class="btn btn-primary big" id="swToggle">▶ Start</button>
-        <button class="btn btn-ghost step" id="swReset">Reset</button>
+        <button class="btn btn-primary big" id="swToggle">Start</button>
+        <button class="btn btn-ghost step" id="swReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg>Reset</button>
       </div>
       <ol class="laps" id="swLaps" aria-live="polite"></ol>
     </section>
@@ -216,8 +235,8 @@
     <!-- ===================== TRAFFIC LIGHT ===================== -->
     <section id="view-traffic" class="view" aria-label="Traffic Light" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>🚦 Traffic Light</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Traffic Light</h2>
       </div>
       <div class="stage traffic-stage">
         <div class="light-housing" role="group" aria-label="Room signal">
@@ -235,8 +254,8 @@
     <!-- ===================== DICE & NUMBERS ===================== -->
     <section id="view-dice" class="view" aria-label="Dice and Numbers" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>🎲 Dice &amp; Numbers</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Dice &amp; Numbers</h2>
       </div>
       <div class="seg" role="group" aria-label="Mode">
         <button class="seg-btn is-on" data-dmode="dice">Dice</button>
@@ -253,7 +272,7 @@
           <button class="chip dice-count" data-n="4">4 dice</button>
         </div>
         <div class="controls">
-          <button class="btn btn-primary big" id="rollBtn">🎲 Roll</button>
+          <button class="btn btn-primary big" id="rollBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg>Roll</button>
           <p class="hint" id="diceTotal"></p>
         </div>
       </div>
@@ -265,17 +284,17 @@
           <label>Max <input type="number" id="numMax" value="100" inputmode="numeric" /></label>
         </div>
         <div class="controls">
-          <button class="btn btn-primary big" id="genNumber">🔢 Generate</button>
+          <button class="btn btn-primary big" id="genNumber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Generate</button>
         </div>
       </div>
 
       <div id="coinMode" hidden>
         <div class="stage coin-stage">
-          <div class="coin" id="coin"><span id="coinFace">🦆</span></div>
+          <div class="coin" id="coin"><span id="coinFace"></span></div>
         </div>
         <div class="controls">
-          <button class="btn btn-primary big" id="flipCoin">🪙 Flip</button>
-          <p class="hint" id="coinOut">Heads = 🦆 &nbsp;·&nbsp; Tails = ⭐</p>
+          <button class="btn btn-primary big" id="flipCoin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9.5a3 3 0 1 1 3 3v1.5"/><path d="M12 17h.01"/></svg>Flip</button>
+          <p class="hint" id="coinOut">Heads = duck · Tails = star</p>
         </div>
       </div>
     </section>
@@ -283,18 +302,18 @@
     <!-- ===================== NOISE METER ===================== -->
     <section id="view-noise" class="view" aria-label="Noise Meter" hidden>
       <div class="tool-head">
-        <button class="back-btn" data-back aria-label="Back to tools">‹ Tools</button>
-        <h2>📢 Noise Meter</h2>
+        <button class="back-btn" data-back aria-label="Back to tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Tools</button>
+        <h2>Noise Meter</h2>
       </div>
       <div class="stage noise-stage">
-        <div class="noise-duck" id="noiseDuck" aria-hidden="true">😌</div>
+        <div class="noise-duck" id="noiseDuck" aria-hidden="true"></div>
         <div class="noise-bar-wrap" aria-hidden="true">
           <div class="noise-bar" id="noiseBar"></div>
         </div>
         <div class="noise-label" id="noiseLabel" role="status" aria-live="polite">Tap start to listen</div>
       </div>
       <div class="controls">
-        <button class="btn btn-primary big" id="noiseToggle">🎙️ Start listening</button>
+        <button class="btn btn-primary big" id="noiseToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Start listening</button>
         <label class="range-slider">
           Alarm threshold
           <input type="range" id="noiseThresh" min="20" max="95" value="65" />
@@ -309,8 +328,8 @@
   <div class="modal-backdrop" id="rosterModal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rosterTitle">
       <div class="modal-head">
-        <h2 id="rosterTitle">👥 Class Roster</h2>
-        <button class="icon-btn" id="closeRoster" aria-label="Close">✕</button>
+        <h2 id="rosterTitle">Class Roster</h2>
+        <button class="icon-btn" id="closeRoster" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <p class="modal-hint">One name per line. Saved on this device automatically.</p>
       <textarea id="rosterText" spellcheck="false" placeholder="Ada&#10;Grace&#10;Alan&#10;Katherine&#10;…"></textarea>
@@ -324,9 +343,9 @@
       <div class="share-row">
         <span class="share-title">Move this roster to another device</span>
         <div class="share-actions">
-          <button class="btn btn-ghost" id="copyLink">🔗 Copy link</button>
-          <button class="btn btn-ghost" id="downloadRoster">⬇️ Backup</button>
-          <button class="btn btn-ghost" id="importRoster">📂 Restore</button>
+          <button class="btn btn-ghost" id="copyLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6M10.5 6.5 12 5a4 4 0 0 1 6 6l-1.5 1.5M13.5 17.5 12 19a4 4 0 0 1-6-6l1.5-1.5"/></svg>Copy link</button>
+          <button class="btn btn-ghost" id="downloadRoster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>Backup</button>
+          <button class="btn btn-ghost" id="importRoster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 13l5-5 5 5M4 3h16"/></svg>Restore</button>
           <input type="file" id="importFile" accept=".txt,text/plain" hidden />
         </div>
       </div>
@@ -336,7 +355,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <footer class="app-footer">
-    Made with 🦆 for teachers · Works offline · No tracking, ever.
+    Made for teachers · Works offline · No tracking, ever.
   </footer>
 
   <script src="app.js"></script>

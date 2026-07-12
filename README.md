@@ -22,17 +22,21 @@ tracking — and it works with no internet connection.
 
 ## Highlights for teachers
 
-- **Works offline.** Everything runs in the browser. Save the folder to a laptop
-  or tablet and it keeps working on a school Wi‑Fi dead‑spot.
+- **Works offline.** All functionality runs in the browser. Save the folder to a
+  laptop or tablet and every tool keeps working on a school Wi‑Fi dead‑spot. The
+  only network request is the web fonts (Plus Jakarta Sans + JetBrains Mono) from
+  Google Fonts; when they're unavailable the app falls back to system fonts and
+  works exactly the same.
 - **Your roster is saved** on the device (via `localStorage`) and shared across
-  every tool. Edit it once from the 👥 button.
+  every tool. Edit it once from the roster button in the header.
 - **Move your roster between devices** with one tap — copy a share link, or
   back it up / restore it as a plain `.txt` file. (All local; no accounts.)
 - **Mobile & touch friendly.** Big tap targets, works in portrait on a phone,
   scales up to an interactive whiteboard.
 - **Light & dark mode**, and it respects "reduce motion" settings.
 - **Private by design.** The mic audio for the Noise Meter never leaves the
-  device and is never recorded. There is no analytics or network code at all.
+  device and is never recorded. There is no analytics or tracking of any kind —
+  the sole outbound request is the Google Fonts stylesheet.
 - **Accessible.** Keyboard navigable, screen‑reader labels, visible focus rings.
 
 ## Using it
