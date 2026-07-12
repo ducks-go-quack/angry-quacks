@@ -600,7 +600,7 @@
   const Timer = (() => {
     const CIRC = 2 * Math.PI * 54; // matches r=54 in svg
     let total = 300, remaining = 300;
-    let running = false, endAt = 0, raf = 0;
+    let running = false, endAt = 0, raf = 0, endTimer = 0;
     let lastWholeSecond = -1, ringingTimeout = 0, editing = false;
 
     function fmt(s) {
@@ -631,10 +631,12 @@
     }
 
     function finish() {
+      if (!running) return; // may be reached by both the rAF loop and the end timer
       running = false;
       remaining = 0;
-      draw();
+      clearTimeout(endTimer); endTimer = 0;
       cancelAnimationFrame(raf);
+      draw();
       $("#timerToggle").innerHTML = ICONS.play + "Start";
       $("#timerSub").textContent = "Time's up!";
       $(".timer-stage").classList.add("ringing");
@@ -655,11 +657,16 @@
       $("#timerToggle").innerHTML = ICONS.pause + "Pause";
       $("#timerSub").textContent = "Counting down…";
       ensureAudio();
+      // rAF drives the smooth countdown, but it freezes in a backgrounded tab —
+      // so also arm a wall-clock timeout so the finish (and its quack) still fires.
+      clearTimeout(endTimer);
+      endTimer = setTimeout(finish, Math.max(0, remaining * 1000));
       raf = requestAnimationFrame(loop);
     }
     function pause() {
       running = false;
       cancelAnimationFrame(raf);
+      clearTimeout(endTimer); endTimer = 0;
       $("#timerToggle").innerHTML = ICONS.play + "Resume";
       $("#timerSub").textContent = "Paused";
     }
@@ -670,6 +677,7 @@
       remaining = total;
       running = false;
       cancelAnimationFrame(raf);
+      clearTimeout(endTimer); endTimer = 0;
       $(".timer-stage").classList.remove("ringing");
       $("#timerToggle").innerHTML = ICONS.play + "Start";
       $("#timerSub").textContent = "Ready";
@@ -745,6 +753,7 @@
     LEAVE.timer = () => {
       commitEdit(true);
       cancelAnimationFrame(raf); running = false;
+      clearTimeout(endTimer); endTimer = 0;
       $(".timer-stage").classList.remove("ringing");
       $("#timerToggle").innerHTML = ICONS.play + (remaining < total && remaining > 0 ? "Resume" : "Start");
     };
