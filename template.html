@@ -1,0 +1,887 @@
+<!--
+  Component Library — reference template (Northwind design system)
+  Self-contained: plain HTML + CSS + vanilla JS, no build step, no dependencies.
+  Converted from the Claude Design "Component Library.dc.html" export into a
+  standalone, fully-interactive reference. Open directly in a browser, or keep
+  it in the repo as the source-of-truth for the design system.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:oklch(0.985 0.003 265); --surface:oklch(1 0 0); --surface-2:oklch(0.972 0.004 265);
+    --border:oklch(0.915 0.006 265); --text:oklch(0.24 0.02 265); --text-2:oklch(0.5 0.015 265); --text-3:oklch(0.66 0.012 265);
+    --accent:#0d9488; --accent-hover:color-mix(in oklab,var(--accent),black 12%); --accent-weak:color-mix(in oklab,var(--accent),transparent 88%); --accent-text:var(--accent);
+    --success:oklch(0.62 0.14 155); --warning:oklch(0.72 0.15 75); --danger:oklch(0.585 0.2 25); --danger-hover:color-mix(in oklab,oklch(0.585 0.2 25),black 10%); --info:oklch(0.6 0.15 250);
+    --radius:14px; --shadow:0 1px 2px rgba(17,24,39,.05),0 8px 24px -12px rgba(17,24,39,.12);
+    --ring:color-mix(in oklab,var(--accent),transparent 68%);
+    --font:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:oklch(0.205 0.012 265); --surface:oklch(0.245 0.014 265); --surface-2:oklch(0.29 0.016 265);
+      --border:oklch(0.33 0.014 265); --text:oklch(0.96 0.005 265); --text-2:oklch(0.72 0.012 265); --text-3:oklch(0.56 0.014 265);
+      --accent-text:color-mix(in oklab,var(--accent),white 22%);
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
+      --success:oklch(0.72 0.14 155); --warning:oklch(0.8 0.14 80); --danger:oklch(0.68 0.18 25); --info:oklch(0.72 0.13 250);
+    }
+  }
+  :root[data-theme=dark]{
+    --bg:oklch(0.205 0.012 265); --surface:oklch(0.245 0.014 265); --surface-2:oklch(0.29 0.016 265);
+    --border:oklch(0.33 0.014 265); --text:oklch(0.96 0.005 265); --text-2:oklch(0.72 0.012 265); --text-3:oklch(0.56 0.014 265);
+    --accent-text:color-mix(in oklab,var(--accent),white 22%);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
+    --success:oklch(0.72 0.14 155); --warning:oklch(0.8 0.14 80); --danger:oklch(0.68 0.18 25); --info:oklch(0.72 0.13 250);
+  }
+  :root[data-theme=light]{
+    --bg:oklch(0.985 0.003 265); --surface:oklch(1 0 0); --surface-2:oklch(0.972 0.004 265);
+    --border:oklch(0.915 0.006 265); --text:oklch(0.24 0.02 265); --text-2:oklch(0.5 0.015 265); --text-3:oklch(0.66 0.012 265);
+    --accent-text:var(--accent);
+    --shadow:0 1px 2px rgba(17,24,39,.05),0 8px 24px -12px rgba(17,24,39,.12);
+    --success:oklch(0.62 0.14 155); --warning:oklch(0.72 0.15 75); --danger:oklch(0.585 0.2 25); --info:oklch(0.6 0.15 250);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+  h1,h2,h3,p{margin:0}
+  a{color:var(--accent-text);text-decoration:none}
+  svg{display:block}
+  ::selection{background:var(--accent-weak)}
+  button{font-family:inherit}
+  :focus-visible{outline:none;box-shadow:0 0 0 4px var(--ring);border-radius:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes toastIn{from{opacity:0;transform:translateX(20px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes modalPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes bar{from{width:100%}to{width:0%}}
+  @keyframes shimmer{100%{transform:translateX(100%)}}
+  @keyframes menuIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+  /* ---- shell ---- */
+  .app{display:flex;height:100vh;width:100%;overflow:hidden}
+  .sidebar{position:relative;flex:0 0 auto;width:256px;height:100%;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 12px;transition:width .22s ease;overflow:hidden;z-index:5}
+  .app.collapsed .sidebar{width:76px}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+  .brand-mark{width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
+  .brand-mark svg{width:19px;height:19px}
+  .brand-text{display:flex;flex-direction:column;gap:2px;line-height:1}
+  .brand-text b{font-weight:700;font-size:15px}
+  .brand-text span{font-size:11px;color:var(--text-3)}
+  .app.collapsed .brand-text{display:none}
+  .nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;overflow-x:hidden}
+  .nav-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:14px 12px 6px}
+  .app.collapsed .nav-label{display:none}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-size:14px;cursor:pointer;color:var(--text-2);font-weight:500;background:transparent;border:0;text-align:left;transition:background .15s,color .15s;width:100%}
+  .app.collapsed .nav-item{justify-content:center}
+  .nav-item svg{width:19px;height:19px;flex:0 0 auto}
+  .nav-item:hover{background:var(--surface-2)}
+  .nav-item.active{background:var(--accent-weak);color:var(--accent-text);font-weight:600}
+  .nav-item span{white-space:nowrap;overflow:hidden}
+  .app.collapsed .nav-item span{display:none}
+  .promo{margin-top:12px;padding:16px;border-radius:calc(var(--radius) - 2px);background:linear-gradient(150deg,var(--accent),color-mix(in oklab,var(--accent),black 22%));color:#fff}
+  .app.collapsed .promo{display:none}
+  .promo b{font-weight:700;font-size:14px}
+  .promo p{font-size:12px;opacity:.85;margin-top:4px;line-height:1.4}
+  .promo button{margin-top:12px;display:inline-flex;height:32px;align-items:center;padding:0 14px;border-radius:8px;background:rgba(255,255,255,.16);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:0}
+  .promo button:hover{background:rgba(255,255,255,.28)}
+
+  .col{display:flex;flex-direction:column;flex:1;min-width:0;height:100%}
+  .header{height:64px;flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:0 24px;background:color-mix(in oklab,var(--surface),transparent 8%);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:4}
+  .iconbtn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--text-2);cursor:pointer;transition:background .15s,color .15s}
+  .iconbtn svg{width:20px;height:20px}
+  .iconbtn:hover{background:var(--surface-2);color:var(--text)}
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:14px}
+  .crumbs .muted{color:var(--text-3)}
+  .crumbs .cur{color:var(--text);font-weight:600}
+  .spacer{flex:1}
+  .search{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);min-width:220px;transition:border-color .15s,box-shadow .15s}
+  .search:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring)}
+  .search svg{width:17px;height:17px;color:var(--text-3)}
+  .search input{border:0;background:transparent;outline:none;color:var(--text);font:inherit;font-size:14px;width:100%}
+  .avatar-btn{display:flex;align-items:center;gap:10px;padding:4px 8px 4px 4px;border-radius:12px;border:1px solid transparent;background:transparent;cursor:pointer;color:var(--text)}
+  .avatar-btn:hover{background:var(--surface-2)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  .avatar-name{text-align:left;line-height:1.15}
+  .avatar-name b{display:block;font-size:13px;font-weight:600}
+  .avatar-name span{display:block;font-size:11px;color:var(--text-3)}
+  .divider-v{width:1px;height:26px;background:var(--border);margin:0 2px}
+  .notif{position:relative}
+  .notif .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+
+  .main{flex:1;overflow-y:auto;padding:32px}
+  .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+  section{scroll-margin-top:88px}
+
+  /* ---- shared bits ---- */
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+  .sec-head{margin-bottom:16px}
+  .sec-head h2{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-top:6px}
+  .sec-head p{color:var(--text-2);font-size:14px;margin-top:6px;max-width:64ch}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px}
+  .sublabel{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px}
+  .rule{height:1px;background:var(--border)}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+  /* ---- buttons ---- */
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;height:40px;padding:0 16px;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s,color .15s,box-shadow .15s;background:var(--surface-2);color:var(--text)}
+  .btn svg{width:17px;height:17px}
+  .btn:focus-visible{box-shadow:0 0 0 4px var(--ring)}
+  .btn-primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-secondary{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+  .btn-secondary:hover{background:var(--border)}
+  .btn-outline{background:transparent;color:var(--text);border-color:var(--border)}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent-text)}
+  .btn-subtle{background:var(--accent-weak);color:var(--accent-text);border-color:transparent}
+  .btn-subtle:hover{background:color-mix(in oklab,var(--accent),transparent 80%)}
+  .btn-danger{background:var(--danger);color:#fff;border-color:transparent}
+  .btn-danger:hover{background:var(--danger-hover)}
+  .btn-sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px}
+  .btn-lg{height:48px;padding:0 22px;font-size:15px;border-radius:12px}
+  .btn-icon{width:40px;height:40px;padding:0;justify-content:center;background:var(--surface-2);color:var(--text-2);border-color:var(--border)}
+  .btn-icon:hover{color:var(--text);border-color:var(--accent)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .btn.focused{box-shadow:0 0 0 4px var(--ring)}
+  .spinner{width:16px;height:16px;animation:spin .7s linear infinite}
+  .state{display:flex;flex-direction:column;gap:8px;align-items:center}
+  .state small{font-size:12px;color:var(--text-3)}
+
+  /* ---- stat cards ---- */
+  .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .stat{padding:20px}
+  .stat-top{display:flex;align-items:center;justify-content:space-between}
+  .stat-top span{font-size:13px;color:var(--text-2);font-weight:600}
+  .stat-ico{width:32px;height:32px;border-radius:9px;background:var(--accent-weak);color:var(--accent-text);display:flex;align-items:center;justify-content:center}
+  .stat-ico svg{width:17px;height:17px}
+  .stat-val{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:12px;font-variant-numeric:tabular-nums}
+  .delta{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .pill{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:3px 7px;border-radius:999px}
+  .pill.up{background:color-mix(in oklab,var(--success),transparent 86%);color:var(--success)}
+  .pill svg{width:13px;height:13px}
+  .delta small{font-size:12px;color:var(--text-3)}
+  .spark{width:100%;height:34px;margin-top:10px;display:block}
+  .grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
+  .list-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .list-row:last-child{border-bottom:0}
+  .ava-sm{width:30px;height:30px;border-radius:50%;background:var(--accent-weak);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 auto}
+  .list-row b{font-size:13.5px;font-weight:600}
+  .list-row small{display:block;font-size:12px;color:var(--text-3)}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:220px;padding:22px}
+  .empty-ico{width:52px;height:52px;border-radius:14px;background:var(--surface-2);color:var(--text-3);display:flex;align-items:center;justify-content:center}
+  .empty h3{font-size:15px;font-weight:700;margin-top:14px}
+  .empty p{font-size:13px;color:var(--text-2);margin-top:4px;max-width:34ch}
+  .skel{position:relative;overflow:hidden;background:var(--surface-2);border-radius:6px}
+  .skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,color-mix(in oklab,var(--text),transparent 90%),transparent);animation:shimmer 1.4s infinite}
+
+  /* ---- table ---- */
+  .table-toolbar{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .count{font-size:12px;font-weight:600;color:var(--accent-text);background:var(--accent-weak);padding:2px 8px;border-radius:999px}
+  .sel-actions{display:flex;align-items:center;gap:10px}
+  .sel-actions span{font-size:13px;color:var(--text-2)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+  thead tr{background:var(--surface-2)}
+  th{text-align:left;padding:12px 16px;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-2);white-space:nowrap}
+  th.sortable{cursor:pointer;user-select:none}
+  th .arrow{display:inline-flex;opacity:.25;transition:transform .15s,opacity .15s}
+  th.sorted .arrow{opacity:1;color:var(--accent-text)}
+  th.sorted.desc .arrow{transform:rotate(180deg)}
+  th .arrow svg{width:13px;height:13px}
+  td{padding:12px 16px;color:var(--text-2)}
+  tbody tr{border-top:1px solid var(--border);transition:background .12s}
+  tbody tr:hover{background:var(--surface-2)}
+  tbody tr.selected{background:var(--accent-weak)}
+  .chk{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:6px;cursor:pointer;border:1.5px solid var(--border);background:transparent;transition:border-color .12s,background .12s;flex:0 0 auto}
+  .chk:hover{border-color:var(--accent)}
+  .chk.on{background:var(--accent);border-color:var(--accent)}
+  .chk svg{width:13px;height:13px}
+  .member{display:flex;align-items:center;gap:11px}
+  .member b{font-weight:600;color:var(--text);line-height:1.2}
+  .member small{font-size:12.5px;color:var(--text-3)}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:999px}
+  .badge .bdot{width:6px;height:6px;border-radius:50%}
+  .table-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 24px}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-top:1px solid var(--border);flex-wrap:wrap}
+  .pager .muted{font-size:13px;color:var(--text-3)}
+  .pg{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:34px;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
+  .pg svg{width:15px;height:15px}
+  .pg:hover:not(:disabled){border-color:var(--accent);color:var(--text)}
+  .pg.on{background:var(--accent);color:#fff;border-color:transparent;cursor:default}
+  .pg:disabled{opacity:.4;cursor:not-allowed}
+  .pg-ell{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:34px;color:var(--text-3)}
+
+  /* ---- breadcrumbs ---- */
+  .bc{display:flex;align-items:center;gap:8px;font-size:14px;flex-wrap:wrap}
+  .bc a{color:var(--text-2)}
+  .bc .cur{color:var(--text);font-weight:600}
+  .bc svg{width:15px;height:15px;color:var(--text-3)}
+  .bc.slash{gap:10px}
+  .bc.slash .sep{color:var(--text-3)}
+  .bc.pill{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);padding:7px 14px;border-radius:999px}
+
+  /* ---- modal ---- */
+  .overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;background:color-mix(in oklab,#0a0e1a,transparent 42%);backdrop-filter:blur(3px);animation:fadeIn .15s ease}
+  .modal{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);box-shadow:0 28px 70px -18px rgba(0,0,0,.5);animation:modalPop .18s ease;overflow:hidden}
+  .modal-head{padding:22px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .modal-head h3{font-size:18px;font-weight:700}
+  .modal-head p{font-size:13.5px;color:var(--text-2);margin-top:6px;line-height:1.5}
+  .modal-body{padding:18px 24px 4px}
+  .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:20px 24px 22px}
+  .modal-x{flex:0 0 auto;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .modal-x svg{width:17px;height:17px}
+  .modal-x:hover{background:var(--surface-2);color:var(--text)}
+  .confirm-ico{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:color-mix(in oklab,var(--danger),transparent 86%);color:var(--danger);display:flex;align-items:center;justify-content:center}
+  .confirm-ico svg{width:22px;height:22px}
+
+  /* ---- fields ---- */
+  .field label,.lbl{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+  .input{width:100%;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+  .input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring);background:var(--surface)}
+  .input.error{border-color:var(--danger)}
+  .input.error:focus{box-shadow:0 0 0 4px color-mix(in oklab,var(--danger),transparent 72%)}
+  .input[disabled]{color:var(--text-3);cursor:not-allowed;opacity:.7}
+  .err{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger);margin-top:6px}
+  .err svg{width:14px;height:14px}
+  .grid-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  .in-icon{display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);transition:border-color .15s,box-shadow .15s,background .15s}
+  .in-icon:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring);background:var(--surface)}
+  .in-icon svg{width:17px;height:17px;color:var(--text-3)}
+  .in-icon input{border:0;background:transparent;outline:none;color:var(--text);font:inherit;font-size:14px;width:100%}
+  .in-prefix{display:flex;height:42px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+  .in-prefix:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring)}
+  .in-prefix .pfx{display:flex;align-items:center;padding:0 12px;background:color-mix(in oklab,var(--text),transparent 94%);color:var(--text-3);font-size:14px;border-right:1px solid var(--border)}
+  .in-prefix input{border:0;background:transparent;outline:none;color:var(--text);font:inherit;font-size:14px;width:100%;padding:0 12px}
+  select.input{padding-right:34px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center}
+  textarea.input{min-height:96px;height:auto;padding:10px 12px;resize:vertical}
+  .controls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+  .opt{display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none;font-size:14px}
+  .opt+.opt{margin-top:12px}
+  .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:border-color .12s}
+  .opt.on .radio{border-color:var(--accent)}
+  .radio i{width:8px;height:8px;border-radius:50%;background:var(--accent);display:none}
+  .opt.on .radio i{display:block}
+  .switch{width:44px;height:26px;border-radius:999px;background:var(--border);position:relative;transition:background .18s;flex:0 0 auto}
+  .switch.on{background:var(--accent)}
+  .switch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .18s}
+  .switch.on i{transform:translateX(18px)}
+
+  /* ---- dropdown ---- */
+  .menu-wrap{position:relative}
+  .menu{position:absolute;top:calc(100% + 8px);left:0;min-width:210px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:45;animation:menuIn .14s ease}
+  .menu[hidden]{display:none}
+  .menu button{display:flex;align-items:center;gap:11px;width:100%;padding:9px 12px;border-radius:8px;border:0;background:transparent;color:var(--text);font:inherit;font-size:13.5px;font-weight:500;text-align:left;cursor:pointer;transition:background .12s}
+  .menu button:hover{background:var(--surface-2)}
+  .menu button.danger{color:var(--danger)}
+  .menu button.danger:hover{background:color-mix(in oklab,var(--danger),transparent 90%)}
+  .menu button svg{width:16px;height:16px;color:var(--text-3);flex:0 0 auto}
+  .menu button.danger svg{color:var(--danger)}
+  .menu .sep{height:1px;background:var(--border);margin:6px 4px}
+  .menu.select button{justify-content:space-between}
+  .menu.select .ck{width:16px;height:16px;color:var(--accent-text)}
+
+  /* ---- blade ---- */
+  .blade-overlay{position:fixed;inset:0;z-index:65;background:color-mix(in oklab,#0a0e1a,transparent 50%);backdrop-filter:blur(2px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s,visibility .3s}
+  .blade-overlay.open{opacity:1;visibility:visible;pointer-events:auto}
+  .blade{position:fixed;top:0;right:0;height:100%;width:min(410px,92vw);background:var(--surface);border-left:1px solid var(--border);z-index:70;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1),box-shadow .32s}
+  .blade.open{transform:translateX(0);box-shadow:-24px 0 60px -20px rgba(0,0,0,.4)}
+  .blade-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px;border-bottom:1px solid var(--border)}
+  .blade-head .who{display:flex;align-items:center;gap:12px;min-width:0}
+  .blade-head .ava-lg{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--accent-weak);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+  .blade-head h3{font-size:17px;font-weight:700;line-height:1.2}
+  .blade-head small{font-size:13px;color:var(--text-3)}
+  .blade-body{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:22px}
+  .kv{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .kv span{font-size:13.5px;color:var(--text-2)}
+  .kv b{font-size:13.5px;font-weight:600}
+  .blade-foot{display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--border)}
+  .blade-foot .btn{flex:1;justify-content:center;height:42px}
+
+  /* ---- toasts ---- */
+  .toast-stack{position:fixed;top:20px;right:20px;z-index:80;display:flex;flex-direction:column;gap:12px;width:344px;max-width:calc(100vw - 40px);pointer-events:none}
+  .toast{pointer-events:auto;position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px;display:flex;gap:12px;align-items:flex-start;animation:toastIn .22s ease}
+  .toast .t-ico{flex:0 0 auto;width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+  .toast .t-ico svg{width:17px;height:17px}
+  .toast .t-body{flex:1;min-width:0;padding-top:1px}
+  .toast .t-body b{font-size:14px;font-weight:700;line-height:1.2;display:block}
+  .toast .t-body p{font-size:13px;color:var(--text-2);margin-top:2px;line-height:1.4}
+  .toast .t-x{flex:0 0 auto;width:26px;height:26px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .toast .t-x svg{width:15px;height:15px}
+  .toast .t-x:hover{background:var(--surface-2);color:var(--text)}
+  .toast .t-bar{position:absolute;left:0;bottom:0;height:3px;animation:bar 4.6s linear forwards}
+
+  @media (max-width:720px){
+    .main{padding:20px}
+    .search{min-width:0;width:140px}
+    .avatar-name{display:none}
+  }
+</style>
+
+<div class="app" id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z"/></svg></div>
+      <div class="brand-text"><b>Northwind</b><span>SaaS Console</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-label">Main</div>
+      <button class="nav-item active" data-nav="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/></svg><span>Overview</span></button>
+      <button class="nav-item" data-nav="buttons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="3"/><path d="M8 12h8"/></svg><span>Buttons</span></button>
+      <button class="nav-item" data-nav="cards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg><span>Cards &amp; Stats</span></button>
+      <button class="nav-item" data-nav="tables"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M3 14.5h18M9 9v11"/></svg><span>Tables</span></button>
+      <button class="nav-item" data-nav="breadcrumbs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l4 5-4 5"/><path d="M12 7l4 5-4 5"/></svg><span>Breadcrumbs</span></button>
+      <button class="nav-item" data-nav="blade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M14 4v16"/></svg><span>Blade panel</span></button>
+      <button class="nav-item" data-nav="modals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18"/><path d="M7 6.5h.01M10 6.5h.01"/></svg><span>Modals</span></button>
+      <button class="nav-item" data-nav="toasts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>Toasts</span></button>
+      <button class="nav-item" data-nav="dropdown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 10l4 4 4-4"/></svg><span>Dropdown</span></button>
+      <button class="nav-item" data-nav="pagination"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="4" height="6" rx="1.2"/><rect x="10" y="9" width="4" height="6" rx="1.2"/><rect x="17" y="9" width="4" height="6" rx="1.2"/></svg><span>Pagination</span></button>
+      <button class="nav-item" data-nav="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9h6M7 13h10M7 17h4"/></svg><span>Form inputs</span></button>
+      <div class="nav-label">Support</div>
+      <button class="nav-item" data-toast="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h8M16 8h4"/><circle cx="14" cy="8" r="2"/><path d="M4 16h4M12 16h8"/><circle cx="8" cy="16" r="2"/></svg><span>Settings</span></button>
+      <button class="nav-item" data-toast="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.5 1.5c0 1.7-2.5 2-2.5 3.5"/><path d="M12 17.5h.01"/></svg><span>Help &amp; docs</span></button>
+    </nav>
+    <div class="promo">
+      <b>Upgrade to Pro</b>
+      <p>Unlock advanced analytics and unlimited seats.</p>
+      <button data-toast="info">View plans</button>
+    </div>
+  </aside>
+
+  <!-- MAIN COLUMN -->
+  <div class="col">
+    <header class="header">
+      <button class="iconbtn" id="toggleSidebar" title="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="crumbs"><span class="muted">Components</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><span class="cur" id="crumb">Overview</span></div>
+      <div class="spacer"></div>
+      <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.6-3.6"/></svg><input placeholder="Search components…"/></label>
+      <button class="iconbtn" id="toggleTheme" title="Toggle theme"><span id="themeIcon"></span></button>
+      <button class="iconbtn notif" data-toast="info" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="dot"></span></button>
+      <div class="divider-v"></div>
+      <button class="avatar-btn"><span class="avatar">AK</span><span class="avatar-name"><b>Ava Klein</b><span>Admin</span></span><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M6 9l6 6 6-6"/></svg></button>
+    </header>
+
+    <main class="main">
+      <div class="wrap">
+
+        <!-- OVERVIEW -->
+        <section id="overview">
+          <div class="card" style="padding:32px;position:relative;overflow:hidden">
+            <div class="eyebrow" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent-weak);padding:6px 10px;border-radius:999px;font-size:11px;letter-spacing:.1em">Design System</div>
+            <h1 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin-top:16px;max-width:20ch">Component library</h1>
+            <p style="color:var(--text-2);font-size:15px;line-height:1.6;margin-top:10px;max-width:64ch">A clean, modern set of reusable UI building blocks. Everything on this page is live — toggle the theme, open a modal, fire a toast, sort the table. This file is the source of truth for the design system.</p>
+            <div class="row" style="margin-top:22px">
+              <button class="btn btn-primary btn-lg" data-nav="buttons">Explore components<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+              <button class="btn btn-outline btn-lg" id="toggleTheme2">Toggle theme</button>
+            </div>
+          </div>
+          <div class="grid-stats" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr));margin-top:16px" id="overviewTiles"></div>
+        </section>
+
+        <!-- BUTTONS -->
+        <section id="buttons">
+          <div class="sec-head"><div class="eyebrow">Buttons</div><h2>Buttons</h2><p>Five variants across sizes, with hover, focus, disabled and loading states. Tab through to see focus rings, or hit a button to fire a toast.</p></div>
+          <div class="panel" style="display:flex;flex-direction:column;gap:26px">
+            <div>
+              <div class="sublabel">Variants</div>
+              <div class="row">
+                <button class="btn btn-primary" data-toast="success">Primary</button>
+                <button class="btn btn-secondary" data-toast="info">Secondary</button>
+                <button class="btn btn-outline" data-toast="info">Outline</button>
+                <button class="btn btn-subtle" data-toast="info">Subtle</button>
+                <button class="btn btn-danger" data-toast="error">Danger</button>
+              </div>
+            </div>
+            <div class="rule"></div>
+            <div>
+              <div class="sublabel">With icon</div>
+              <div class="row">
+                <button class="btn btn-primary" data-modal="form"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New project</button>
+                <button class="btn btn-outline" data-toast="info">View all<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+                <button class="btn btn-icon" data-toast="info" title="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></button>
+              </div>
+            </div>
+            <div class="rule"></div>
+            <div>
+              <div class="sublabel">Sizes</div>
+              <div class="row">
+                <button class="btn btn-primary btn-sm" data-toast="info">Small</button>
+                <button class="btn btn-primary" data-toast="info">Medium</button>
+                <button class="btn btn-primary btn-lg" data-toast="info">Large</button>
+              </div>
+            </div>
+            <div class="rule"></div>
+            <div>
+              <div class="sublabel">States</div>
+              <div class="row" style="gap:20px;align-items:flex-start">
+                <div class="state"><button class="btn btn-primary" data-toast="info">Default</button><small>Default / hover</small></div>
+                <div class="state"><button class="btn btn-primary focused">Focused</button><small>Focus ring</small></div>
+                <div class="state"><button class="btn btn-primary" disabled>Disabled</button><small>Disabled</small></div>
+                <div class="state"><button class="btn btn-primary" id="loadBtn" style="min-width:132px;justify-content:center">Save changes</button><small>Loading (click)</small></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CARDS & STATS -->
+        <section id="cards">
+          <div class="sec-head"><div class="eyebrow">Cards &amp; Stats</div><h2>Cards &amp; stats</h2><p>KPI tiles with trend deltas and sparklines, plus content, empty, and loading (skeleton) card states.</p></div>
+          <div class="grid-stats" id="statCards"></div>
+          <div class="grid-cards">
+            <div class="card" style="padding:22px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><h3 style="font-size:15px;font-weight:700">Recent activity</h3><a href="#cards" data-nav="cards" style="font-size:13px;font-weight:600">View all</a></div>
+              <div style="margin-top:8px">
+                <div class="list-row"><span class="ava-sm">JD</span><div style="flex:1;min-width:0"><b>Jordan Diaz invited a member</b><small>2 minutes ago</small></div></div>
+                <div class="list-row"><span class="ava-sm">SL</span><div style="flex:1;min-width:0"><b>Sam Lee deployed to production</b><small>1 hour ago</small></div></div>
+                <div class="list-row"><span class="ava-sm">MP</span><div style="flex:1;min-width:0"><b>Mia Park updated billing</b><small>Yesterday</small></div></div>
+              </div>
+            </div>
+            <div class="card empty">
+              <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7.5 14.5h4"/></svg></div>
+              <h3>No integrations yet</h3>
+              <p>Connect a tool to start syncing data across your workspace.</p>
+              <button class="btn btn-primary" data-toast="success" style="margin-top:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add integration</button>
+            </div>
+            <div class="card" style="padding:22px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="skel" style="width:40px;height:40px;border-radius:50%"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="skel" style="height:11px;width:60%"></div><div class="skel" style="height:11px;width:40%"></div></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px"><div class="skel" style="height:11px;width:100%"></div><div class="skel" style="height:11px;width:90%"></div><div class="skel" style="height:11px;width:75%"></div></div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:18px;text-align:center">Loading skeleton</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TABLES -->
+        <section id="tables">
+          <div class="sec-head"><div class="eyebrow">Tables</div><h2>Tables</h2><p>A data table with a toolbar, sortable columns, row selection, status badges, row actions, an empty state, and pagination. Click a column header to sort; use the checkboxes to select rows.</p></div>
+          <div class="card" style="overflow:hidden">
+            <div class="table-toolbar">
+              <div style="display:flex;align-items:center;gap:8px"><h3 style="font-size:15px;font-weight:700">Members</h3><span class="count" id="rowCount">5</span></div>
+              <div class="spacer"></div>
+              <div class="sel-actions" id="selActions" hidden>
+                <span id="selCount">0 selected</span>
+                <button class="btn btn-sm" id="delSel" style="color:var(--danger);border:1px solid color-mix(in oklab,var(--danger),transparent 60%);background:transparent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>Delete</button>
+              </div>
+              <label class="search" style="min-width:200px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.6-3.6"/></svg><input id="tableSearch" placeholder="Filter members…"/></label>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr>
+                  <th style="width:44px;padding-left:18px"><span class="chk" id="checkAll"></span></th>
+                  <th class="sortable sorted" data-sort="name">Member <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></span></th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th class="sortable" data-sort="seen">Last active <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></span></th>
+                  <th style="width:52px"></th>
+                </tr></thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+            <div id="tableEmpty" class="table-empty" hidden>
+              <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.6-3.6"/></svg></div>
+              <h3 style="font-size:15px;font-weight:700;margin-top:12px">No members found</h3>
+              <p style="font-size:13px;color:var(--text-2);margin-top:4px">No results for "<span id="emptyQuery"></span>". Try a different search.</p>
+              <button class="btn btn-outline btn-sm" id="clearSearch" style="margin-top:14px">Clear search</button>
+            </div>
+            <div class="pager">
+              <span class="muted">Showing <span id="showingCount">5</span> of 24 members</span>
+              <div class="row" style="gap:6px">
+                <button class="pg" data-toast="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>Prev</button>
+                <button class="pg on">1</button>
+                <button class="pg" data-toast="info">2</button>
+                <button class="pg" data-toast="info">3</button>
+                <button class="pg" data-toast="info">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BREADCRUMBS -->
+        <section id="breadcrumbs">
+          <div class="sec-head"><div class="eyebrow">Breadcrumbs</div><h2>Breadcrumbs</h2><p>Three separator treatments. The last item is the current page and is non-interactive.</p></div>
+          <div class="panel" style="display:flex;flex-direction:column;gap:22px">
+            <div><div class="sublabel">Chevron</div>
+              <div class="bc"><a href="#breadcrumbs">Home</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><a href="#breadcrumbs">Projects</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg><span class="cur">Northwind</span></div>
+            </div>
+            <div class="rule"></div>
+            <div><div class="sublabel">Slash</div>
+              <div class="bc slash"><a href="#breadcrumbs">Dashboard</a><span class="sep">/</span><a href="#breadcrumbs">Settings</a><span class="sep">/</span><span class="cur">Billing</span></div>
+            </div>
+            <div class="rule"></div>
+            <div><div class="sublabel">Pill with home icon</div>
+              <div class="bc pill"><a href="#breadcrumbs" style="display:inline-flex;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg></a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M9 6l6 6-6 6"/></svg><a href="#breadcrumbs">Team</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M9 6l6 6-6 6"/></svg><span class="cur">Members</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLADE -->
+        <section id="blade">
+          <div class="sec-head"><div class="eyebrow">Blade panel</div><h2>Blade panel</h2><p>A drawer that flies out from the right for detail views, filters, or quick edits — without leaving the page. Click the backdrop, the X, or Cancel to slide it away.</p></div>
+          <div class="panel row"><button class="btn btn-primary" id="openBlade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M14 4v16"/></svg>Open blade panel</button></div>
+        </section>
+
+        <!-- MODALS -->
+        <section id="modals">
+          <div class="sec-head"><div class="eyebrow">Modals</div><h2>Modals</h2><p>Three dialog patterns. Click the backdrop or the X to dismiss. The form dialog shows input focus and error states.</p></div>
+          <div class="panel row">
+            <button class="btn btn-primary" data-modal="basic">Basic dialog</button>
+            <button class="btn btn-danger" data-modal="confirm" style="background:transparent;color:var(--danger);border:1px solid color-mix(in oklab,var(--danger),transparent 60%)">Confirmation</button>
+            <button class="btn btn-secondary" data-modal="form">Form dialog</button>
+          </div>
+        </section>
+
+        <!-- TOASTS -->
+        <section id="toasts">
+          <div class="sec-head"><div class="eyebrow">Toasts</div><h2>Toasts &amp; alerts</h2><p>Four semantic types. They stack in the top-right, show a countdown bar, and auto-dismiss after ~5s — or close them manually.</p></div>
+          <div class="panel row">
+            <button class="btn" data-toast="success" style="background:color-mix(in oklab,var(--success),transparent 88%);color:var(--success);border:1px solid color-mix(in oklab,var(--success),transparent 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Success</button>
+            <button class="btn" data-toast="error" style="background:color-mix(in oklab,var(--danger),transparent 88%);color:var(--danger);border:1px solid color-mix(in oklab,var(--danger),transparent 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>Error</button>
+            <button class="btn" data-toast="warning" style="background:color-mix(in oklab,var(--warning),transparent 86%);color:color-mix(in oklab,var(--warning),black 18%);border:1px solid color-mix(in oklab,var(--warning),transparent 68%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5h.01"/></svg>Warning</button>
+            <button class="btn" data-toast="info" style="background:color-mix(in oklab,var(--info),transparent 88%);color:var(--info);border:1px solid color-mix(in oklab,var(--info),transparent 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg>Info</button>
+          </div>
+        </section>
+
+        <!-- DROPDOWN -->
+        <section id="dropdown">
+          <div class="sec-head"><div class="eyebrow">Dropdown menu</div><h2>Dropdown menu</h2><p>Click to reveal a menu of actions or options. Selecting an item — or clicking anywhere outside — closes it.</p></div>
+          <div class="panel row" style="gap:16px">
+            <div class="menu-wrap">
+              <button class="btn btn-secondary" data-menu="actions">Options<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+              <div class="menu" data-menu-panel="actions" hidden>
+                <button data-toast="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17z"/></svg>Edit</button>
+                <button data-toast="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>Duplicate</button>
+                <button data-toast="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.1 10.9 15.9 7.1M8.1 13.1l7.8 3.8"/></svg>Share</button>
+                <div class="sep"></div>
+                <button class="danger" data-toast="error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>Delete</button>
+              </div>
+            </div>
+            <div class="menu-wrap">
+              <button class="btn btn-outline" data-menu="sort"><span style="color:var(--text-3);font-weight:500">Sort:</span> <span id="sortChoice">Newest</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+              <div class="menu select" data-menu-panel="sort" hidden>
+                <button data-sortpick="Newest">Newest<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></button>
+                <button data-sortpick="Oldest">Oldest<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></button>
+                <button data-sortpick="Name A–Z">Name A–Z<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAGINATION -->
+        <section id="pagination">
+          <div class="sec-head"><div class="eyebrow">Pagination</div><h2>Pagination</h2><p>Numbered pages with a sliding window and ellipses, plus a compact variant. Prev / Next disable at the bounds.</p></div>
+          <div class="panel" style="display:flex;flex-direction:column;gap:24px">
+            <div><div class="sublabel">Numbered</div><div class="row" style="gap:6px" id="numbered"></div></div>
+            <div class="rule"></div>
+            <div><div class="sublabel">Compact</div>
+              <div class="row" style="gap:14px">
+                <button class="pg" id="cPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+                <span style="font-size:14px;color:var(--text-2)">Page <b id="cPage" style="color:var(--text)">3</b> of 8</span>
+                <button class="pg" id="cNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+              </div>
+            </div>
+            <div class="rule"></div>
+            <div><div class="sublabel">With page size</div>
+              <div class="row" style="gap:16px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-2)">Rows per page
+                  <select class="input" style="width:auto;height:38px" data-toast="info"><option>10</option><option>25</option><option>50</option></select>
+                </label>
+                <span style="font-size:13.5px;color:var(--text-3)">1–10 of 240</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FORM INPUTS -->
+        <section id="forms">
+          <div class="sec-head"><div class="eyebrow">Form inputs</div><h2>Form inputs</h2><p>Text fields across every state, plus textarea, select, and interactive checkbox, radio, and switch controls.</p></div>
+          <div class="panel" style="display:flex;flex-direction:column;gap:26px">
+            <div><div class="sublabel">Text field states</div>
+              <div class="grid-fields">
+                <div class="field"><label>Default</label><input class="input" placeholder="you@company.com"/></div>
+                <div class="field"><label>Focused</label><input class="input" value="ava@northwind.io" style="border-color:var(--accent);box-shadow:0 0 0 4px var(--ring);background:var(--surface)"/></div>
+                <div class="field"><label>Error</label><input class="input error" value="not-an-email"/><div class="err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>Enter a valid email.</div></div>
+                <div class="field"><label style="color:var(--text-3)">Disabled</label><input class="input" value="Locked value" disabled/></div>
+              </div>
+            </div>
+            <div class="rule"></div>
+            <div class="grid-fields">
+              <div class="field"><label>With icon</label><label class="in-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.6-3.6"/></svg><input placeholder="Search…"/></label></div>
+              <div class="field"><label>With prefix</label><div class="in-prefix"><span class="pfx">https://</span><input value="northwind.io"/></div></div>
+              <div class="field"><label>Select</label><select class="input"><option>United Kingdom</option><option>United States</option><option>Germany</option><option>Japan</option></select></div>
+            </div>
+            <div class="field"><label>Textarea</label><textarea class="input" placeholder="Write a short bio…"></textarea></div>
+            <div class="rule"></div>
+            <div class="controls-grid">
+              <div><div class="sublabel">Checkbox</div>
+                <label class="opt on" data-check><span class="chk on"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span>Email me about product updates</label>
+              </div>
+              <div><div class="sublabel">Radio group</div>
+                <div data-radio>
+                  <label class="opt on" data-val="standard"><span class="radio"><i></i></span>Standard</label>
+                  <label class="opt" data-val="priority"><span class="radio"><i></i></span>Priority</label>
+                  <label class="opt" data-val="enterprise"><span class="radio"><i></i></span>Enterprise</label>
+                </div>
+              </div>
+              <div><div class="sublabel">Switch</div>
+                <label class="opt" data-switch><span class="switch on"><i></i></span><span id="swLabel">Notifications on</span></label>
+              </div>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL MOUNT -->
+<div id="modalMount"></div>
+
+<!-- BLADE -->
+<div class="blade-overlay" id="bladeOverlay"></div>
+<aside class="blade" id="bladePanel" aria-label="Detail panel">
+  <div class="blade-head">
+    <div class="who"><span class="ava-lg">AK</span><div style="min-width:0"><h3>Ava Klein</h3><small>ava@northwind.io</small></div></div>
+    <button class="modal-x" data-blade-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="blade-body">
+    <div><div class="sublabel">Details</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="kv"><span>Role</span><b>Admin</b></div>
+        <div class="kv"><span>Status</span><span class="badge" style="color:var(--success);background:color-mix(in oklab,var(--success),transparent 88%)"><span class="bdot" style="background:var(--success)"></span>Active</span></div>
+        <div class="kv"><span>Team</span><b>Platform</b></div>
+        <div class="kv"><span>Last active</span><b>2m ago</b></div>
+      </div>
+    </div>
+    <div class="rule"></div>
+    <div class="field"><label>Notes</label><textarea class="input" placeholder="Add a note about this member…"></textarea></div>
+  </div>
+  <div class="blade-foot">
+    <button class="btn btn-secondary" data-blade-close>Cancel</button>
+    <button class="btn btn-primary" id="bladeSave">Save changes</button>
+  </div>
+</aside>
+
+<!-- TOAST STACK -->
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+(function(){
+  "use strict";
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const svg=(i,w=1.8)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${i}</svg>`;
+  const ICON={
+    sun:svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>'),
+    moon:svg('<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>'),
+    up:svg('<path d="M6 15l6-6 6 6"/>',2.4), down:svg('<path d="M18 9l-6 6-6-6"/>',2.4),
+    check:svg('<path d="M4 12l5 5L20 6"/>',2.2), x:svg('<path d="M6 6l12 12M18 6 6 18"/>',2.2),
+    warn:svg('<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5h.01"/>',2),
+    info:svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/>',2),
+  };
+
+  /* ---- theme ---- */
+  const root=document.documentElement;
+  function setTheme(m){root.setAttribute('data-theme',m);$('#themeIcon').innerHTML=m==='dark'?ICON.sun:ICON.moon;try{localStorage.setItem('cl_theme',m);}catch(e){}}
+  let saved; try{saved=localStorage.getItem('cl_theme');}catch(e){}
+  setTheme(saved|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
+  const toggleTheme=()=>setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');
+  $('#toggleTheme').addEventListener('click',toggleTheme);
+  $('#toggleTheme2').addEventListener('click',toggleTheme);
+
+  /* ---- sidebar collapse + nav ---- */
+  $('#toggleSidebar').addEventListener('click',()=>$('#app').classList.toggle('collapsed'));
+  const labels={overview:'Overview',buttons:'Buttons',cards:'Cards & Stats',tables:'Tables',breadcrumbs:'Breadcrumbs',blade:'Blade panel',modals:'Modals',toasts:'Toasts',dropdown:'Dropdown menu',pagination:'Pagination',forms:'Form inputs'};
+  function goTo(id){
+    $$('.nav-item[data-nav]').forEach(n=>n.classList.toggle('active',n.dataset.nav===id));
+    $('#crumb').textContent=labels[id]||'Overview';
+    const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  $$('[data-nav]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();goTo(b.dataset.nav);}));
+
+  /* ---- toasts ---- */
+  const META={success:{t:'Changes saved',m:'Your updates are now live.',c:'var(--success)',i:ICON.check},
+    error:{t:'Action failed',m:'Something went wrong — please try again.',c:'var(--danger)',i:ICON.x},
+    warning:{t:'Heads up',m:'This may affect other members.',c:'var(--warning)',i:ICON.warn},
+    info:{t:'Update available',m:'A new version is ready to install.',c:'var(--info)',i:ICON.info}};
+  function toast(kind){
+    const d=META[kind]||META.info, stack=$('#toastStack');
+    const el=document.createElement('div'); el.className='toast';
+    el.innerHTML=`<span class="t-ico" style="background:color-mix(in oklab,${d.c},transparent 86%);color:${d.c}">${d.i}</span>`+
+      `<div class="t-body"><b>${d.t}</b><p>${d.m}</p></div>`+
+      `<button class="t-x" aria-label="Dismiss">${ICON.x}</button>`+
+      `<div class="t-bar" style="background:${d.c}"></div>`;
+    const kill=()=>{el.remove();};
+    el.querySelector('.t-x').addEventListener('click',kill);
+    stack.prepend(el); while(stack.children.length>4) stack.lastChild.remove();
+    setTimeout(kill,4600);
+  }
+  $$('[data-toast]').forEach(b=>b.addEventListener('click',()=>toast(b.dataset.toast)));
+
+  /* ---- loading button ---- */
+  const lb=$('#loadBtn');
+  lb.addEventListener('click',()=>{
+    if(lb.dataset.busy)return; lb.dataset.busy='1'; lb.disabled=true;
+    lb.innerHTML=`<svg class="spinner" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.35)" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>Saving…`;
+    setTimeout(()=>{lb.disabled=false;lb.textContent='Save changes';delete lb.dataset.busy;toast('success');},1600);
+  });
+
+  /* ---- overview tiles + stat cards ---- */
+  const tiles=[
+    ['buttons','5 variants, sizes & states','<rect x="3" y="7" width="18" height="10" rx="3"/><path d="M8 12h8"/>'],
+    ['cards','KPI tiles, empty & loading','<rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/>'],
+    ['tables','Sortable rows, status & actions','<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M3 14.5h18M9 9v11"/>'],
+    ['breadcrumbs','3 separator styles','<path d="M4 7l4 5-4 5"/><path d="M12 7l4 5-4 5"/>'],
+    ['blade','Slide-out drawer','<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M14 4v16"/>'],
+    ['modals','Basic, confirm & form','<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18"/>'],
+    ['toasts','4 types, auto-dismiss','<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/>'],
+    ['dropdown','Actions & select menus','<rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 10l4 4 4-4"/>'],
+    ['pagination','Numbered, compact & sizes','<rect x="3" y="9" width="4" height="6" rx="1.2"/><rect x="10" y="9" width="4" height="6" rx="1.2"/><rect x="17" y="9" width="4" height="6" rx="1.2"/>'],
+    ['forms','Inputs, select, checkbox, switch','<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9h6M7 13h10M7 17h4"/>'],
+  ];
+  const capt={buttons:'Buttons',cards:'Cards & stats',tables:'Tables',breadcrumbs:'Breadcrumbs',blade:'Blade panel',modals:'Modals',toasts:'Toasts',dropdown:'Dropdown menu',pagination:'Pagination',forms:'Form inputs'};
+  $('#overviewTiles').innerHTML=tiles.map(([id,desc,ic])=>
+    `<button class="card" data-nav="${id}" style="text-align:left;padding:18px;cursor:pointer;transition:border-color .15s,transform .15s;background:var(--surface)" onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='';this.style.transform=''">`+
+    `<div class="stat-ico">${svg(ic)}</div>`+
+    `<div style="font-weight:700;font-size:15px;margin-top:12px">${capt[id]}</div>`+
+    `<div style="font-size:13px;color:var(--text-2);margin-top:3px">${desc}</div></button>`).join('');
+  $$('#overviewTiles [data-nav]').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.nav)));
+
+  const stats=[
+    ['Monthly revenue','$48.2k','12.5%','vs last month','0,28 20,22 40,25 60,15 80,18 100,7 120,9'],
+    ['Active users','2,845','4.2%','vs last month','0,24 20,26 40,18 60,20 80,12 100,14 120,6'],
+    ['Churn rate','1.8%','0.4%','improving','0,10 20,12 40,9 60,16 80,14 100,20 120,22'],
+    ['New signups','312','18%','vs last month','0,26 20,24 40,20 60,22 80,14 100,10 120,4'],
+  ];
+  $('#statCards').innerHTML=stats.map(([l,v,d,s,pts])=>
+    `<div class="card stat"><div class="stat-top"><span>${l}</span><span class="stat-ico">${svg('<path d="M12 3v18"/><path d="M16 7.5C16 5.6 14.2 5 12.5 5S9 5.8 9 7.6 10.8 10 12.5 10 16 10.6 16 12.5 14.2 15 12.5 15 9 14.4 9 12.5"/>')}</span></div>`+
+    `<div class="stat-val">${v}</div><div class="delta"><span class="pill up">${ICON.up}${d}</span><small>${s}</small></div>`+
+    `<svg class="spark" viewBox="0 0 120 34" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`).join('');
+
+  /* ---- table ---- */
+  const MEMBERS=[
+    {id:1,name:'Ava Klein',email:'ava@northwind.io',role:'Admin',status:'Active',seen:2},
+    {id:2,name:'Jordan Diaz',email:'jordan@northwind.io',role:'Editor',status:'Active',seen:26},
+    {id:3,name:'Sam Lee',email:'sam@northwind.io',role:'Editor',status:'Invited',seen:1440},
+    {id:4,name:'Mia Park',email:'mia@northwind.io',role:'Viewer',status:'Suspended',seen:4320},
+    {id:5,name:'Noah Bright',email:'noah@northwind.io',role:'Viewer',status:'Active',seen:75},
+  ];
+  const SC={Active:'var(--success)',Invited:'var(--info)',Suspended:'var(--danger)'};
+  let tState={q:'',key:'name',dir:'asc',sel:{}};
+  const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const seenLabel=m=>m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago';
+  function filtered(){
+    let r=MEMBERS.filter(m=>{const q=tState.q.toLowerCase();return !q||m.name.toLowerCase().includes(q)||m.email.toLowerCase().includes(q)||m.role.toLowerCase().includes(q);});
+    return r.slice().sort((a,b)=>{let d=tState.key==='seen'?a.seen-b.seen:a.name.localeCompare(b.name);return tState.dir==='asc'?d:-d;});
+  }
+  function renderTable(){
+    const rows=filtered();
+    $('#rowCount').textContent=rows.length; $('#showingCount').textContent=rows.length;
+    const selCount=rows.filter(m=>tState.sel[m.id]).length;
+    $('#selActions').hidden=selCount===0; $('#selCount').textContent=selCount+' selected';
+    const allOn=rows.length>0&&selCount===rows.length;
+    $('#checkAll').classList.toggle('on',allOn); $('#checkAll').innerHTML=allOn?svg('<path d="M4 12l5 5L20 6"/>',3).replace('currentColor','#fff'):'';
+    $$('th.sortable').forEach(th=>{th.classList.toggle('sorted',th.dataset.sort===tState.key);th.classList.toggle('desc',th.dataset.sort===tState.key&&tState.dir==='desc');});
+    $('#tableEmpty').hidden=rows.length!==0; $('#emptyQuery').textContent=tState.q;
+    $('#tbody').innerHTML=rows.map(m=>{
+      const on=!!tState.sel[m.id];
+      return `<tr class="${on?'selected':''}" data-id="${m.id}">`+
+        `<td style="padding-left:18px"><span class="chk ${on?'on':''}" data-row-check="${m.id}">${on?svg('<path d="M4 12l5 5L20 6"/>',3).replace('currentColor','#fff'):''}</span></td>`+
+        `<td><div class="member"><span class="ava-sm">${initials(m.name)}</span><div style="min-width:0"><b>${m.name}</b><small>${m.email}</small></div></div></td>`+
+        `<td>${m.role}</td>`+
+        `<td><span class="badge" style="color:${SC[m.status]};background:color-mix(in oklab,${SC[m.status]},transparent 88%)"><span class="bdot" style="background:${SC[m.status]}"></span>${m.status}</span></td>`+
+        `<td style="white-space:nowrap">${seenLabel(m.seen)}</td>`+
+        `<td style="text-align:right"><button class="iconbtn" data-toast="info" title="Row actions" style="width:32px;height:32px;color:var(--text-3)">${svg('<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',1.9)}</button></td></tr>`;
+    }).join('');
+    $$('#tbody [data-row-check]').forEach(c=>c.addEventListener('click',()=>{const id=+c.dataset.rowCheck;tState.sel[id]=!tState.sel[id];renderTable();}));
+    $$('#tbody [data-toast]').forEach(b=>b.addEventListener('click',()=>toast('info')));
+  }
+  $('#tableSearch').addEventListener('input',e=>{tState.q=e.target.value;renderTable();});
+  $('#clearSearch').addEventListener('click',()=>{tState.q='';$('#tableSearch').value='';renderTable();});
+  $$('th.sortable').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.sort;if(tState.key===k)tState.dir=tState.dir==='asc'?'desc':'asc';else{tState.key=k;tState.dir='asc';}renderTable();}));
+  $('#checkAll').addEventListener('click',()=>{const rows=filtered();const allOn=rows.length>0&&rows.every(m=>tState.sel[m.id]);rows.forEach(m=>{if(allOn)delete tState.sel[m.id];else tState.sel[m.id]=true;});renderTable();});
+  $('#delSel').addEventListener('click',()=>{tState.sel={};renderTable();toast('error');});
+  renderTable();
+
+  /* ---- dropdown menus ---- */
+  function closeMenus(){$$('[data-menu-panel]').forEach(m=>m.hidden=true);}
+  $$('[data-menu]').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();const key=btn.dataset.menu;const panel=$(`[data-menu-panel="${key}"]`);const willOpen=panel.hidden;closeMenus();panel.hidden=!willOpen;
+  }));
+  document.addEventListener('click',closeMenus);
+  $$('[data-menu-panel]').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
+  $$('#dropdown .menu button:not([data-sortpick])').forEach(b=>b.addEventListener('click',closeMenus));
+  function paintSort(){const v=$('#sortChoice').textContent;$$('[data-sortpick]').forEach(b=>{b.querySelector('.ck').style.visibility=b.dataset.sortpick===v?'visible':'hidden';});}
+  $$('[data-sortpick]').forEach(b=>b.addEventListener('click',()=>{$('#sortChoice').textContent=b.dataset.sortpick;paintSort();closeMenus();}));
+  paintSort();
+
+  /* ---- pagination ---- */
+  let page=3, total=8;
+  function pgStyle(on){return on?'pg on':'pg';}
+  function renderNumbered(){
+    const wrap=$('#numbered');let nums=[1];const a=Math.max(2,page-1),b=Math.min(total-1,page+1);
+    if(a>2)nums.push('…');for(let i=a;i<=b;i++)nums.push(i);if(b<total-1)nums.push('…');if(total>1)nums.push(total);
+    let html=`<button class="pg" ${page===1?'disabled':''} data-pg="prev">${svg('<path d="M15 6l-6 6 6 6"/>',2)}Prev</button>`;
+    nums.forEach(n=>{html+= n==='…'?`<span class="pg-ell">…</span>`:`<button class="${pgStyle(n===page)}" data-pg="${n}">${n}</button>`;});
+    html+=`<button class="pg" ${page===total?'disabled':''} data-pg="next">Next${svg('<path d="M9 6l6 6-6 6"/>',2)}</button>`;
+    wrap.innerHTML=html;
+    $$('#numbered [data-pg]').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.pg;if(v==='prev')page=Math.max(1,page-1);else if(v==='next')page=Math.min(total,page+1);else page=+v;syncPage();}));
+  }
+  function syncPage(){$('#cPage').textContent=page;$('#cPrev').disabled=page===1;$('#cNext').disabled=page===total;renderNumbered();}
+  $('#cPrev').addEventListener('click',()=>{page=Math.max(1,page-1);syncPage();});
+  $('#cNext').addEventListener('click',()=>{page=Math.min(total,page+1);syncPage();});
+  syncPage();
+
+  /* ---- form controls ---- */
+  const chk=$('[data-check]');
+  chk.addEventListener('click',()=>{const box=chk.querySelector('.chk');const on=!box.classList.contains('on');box.classList.toggle('on',on);chk.classList.toggle('on',on);box.innerHTML=on?svg('<path d="M4 12l5 5L20 6"/>',3).replace('currentColor','#fff'):'';});
+  const rg=$('[data-radio]');
+  $$('[data-radio] .opt').forEach(o=>o.addEventListener('click',()=>{$$('[data-radio] .opt').forEach(x=>x.classList.remove('on'));o.classList.add('on');}));
+  const sw=$('[data-switch]');
+  sw.addEventListener('click',()=>{const t=sw.querySelector('.switch');const on=!t.classList.contains('on');t.classList.toggle('on',on);$('#swLabel').textContent=on?'Notifications on':'Notifications off';});
+
+  /* ---- modals ---- */
+  const MODALS={
+    basic:`<div class="modal-head"><div><h3>Invite teammates</h3><p>Send an invitation and we'll email a secure link to join your workspace.</p></div><button class="modal-x" data-close>${ICON.x}</button></div>`+
+      `<div class="modal-body"><label class="lbl">Email address</label><input class="input" placeholder="teammate@company.com"/></div>`+
+      `<div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-submit>Send invite</button></div>`,
+    confirm:`<div class="modal-head" style="padding-bottom:0"><div class="confirm-ico">${ICON.warn}</div><div><h3>Delete project</h3><p>This will permanently delete <b style="color:var(--text)">Northwind</b> and all of its data. This action cannot be undone.</p></div></div>`+
+      `<div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-danger" data-confirm>Delete project</button></div>`,
+    form:`<div class="modal-head"><h3>Create workspace</h3><button class="modal-x" data-close>${ICON.x}</button></div>`+
+      `<div class="modal-body" style="display:flex;flex-direction:column;gap:16px"><div><label class="lbl">Workspace name</label><input class="input" value="Acme Inc."/></div>`+
+      `<div><label class="lbl">Contact email</label><input class="input error" value="not-an-email"/><div class="err">${ICON.info.replace('/>','/>')}Enter a valid email address.</div></div></div>`+
+      `<div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-submit>Create workspace</button></div>`,
+  };
+  function openModal(kind){
+    const mount=$('#modalMount');
+    const ov=document.createElement('div'); ov.className='overlay';
+    ov.innerHTML=`<div class="modal">${MODALS[kind]}</div>`;
+    const close=()=>ov.remove();
+    ov.addEventListener('click',e=>{if(e.target===ov)close();});
+    ov.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',close));
+    const sb=ov.querySelector('[data-submit]'); if(sb)sb.addEventListener('click',()=>{close();toast('success');});
+    const cb=ov.querySelector('[data-confirm]'); if(cb)cb.addEventListener('click',()=>{close();toast('error');});
+    mount.appendChild(ov);
+    const first=ov.querySelector('input'); if(first)setTimeout(()=>first.focus(),60);
+  }
+  $$('[data-modal]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.modal)));
+
+  /* ---- blade ---- */
+  const bo=$('#bladeOverlay'), bp=$('#bladePanel');
+  const openBlade=()=>{bo.classList.add('open');bp.classList.add('open');};
+  const closeBlade=()=>{bo.classList.remove('open');bp.classList.remove('open');};
+  $('#openBlade').addEventListener('click',openBlade);
+  bo.addEventListener('click',closeBlade);
+  $$('[data-blade-close]').forEach(b=>b.addEventListener('click',closeBlade));
+  $('#bladeSave').addEventListener('click',()=>{closeBlade();toast('success');});
+
+  /* ---- esc closes overlays ---- */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){$$('.overlay').forEach(o=>o.remove());closeBlade();closeMenus();}});
+})();
+</script>
